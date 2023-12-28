@@ -241,7 +241,8 @@ impl From<f32> for Vec256f {
 // TODO: Debug, Display
 
 #[test]
-fn is_compiles() {
+#[inline(never)] // in order to find the function in disassembled binary
+fn it_compiles() {
     let a: Vec256f = 1.0.into();
     let b = a * 2.0;
     let mut c = b / 2.0;
