@@ -28,9 +28,23 @@ impl Vec256f {
     /// # Safety
     /// `addr` must not be null.
     #[inline(always)]
-    pub unsafe fn load(addr: *const f32) -> Self {
+    pub unsafe fn load(addr: *const [f32; 8]) -> Self {
         Self {
-            ymm: _mm256_loadu_ps(addr),
+            ymm: _mm256_loadu_ps(addr as *const f32),
+        }
+    }
+
+    /// Loads vector from aligned array pointed by `addr`.
+    ///
+    /// # Safety
+    /// Like [`load`], requires `addr` to be not null.
+    /// Unlike [`load`], requires `addr` to be divisible by `32`, i.e. to be a `32`-byte aligned address.
+    ///
+    /// [`load`]: Self::load
+    #[inline(always)]
+    pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
+        Self {
+            ymm: _mm256_loadu_ps(addr as *const f32),
         }
     }
 
@@ -47,20 +61,6 @@ impl Vec256f {
     pub fn broadcast(value: f32) -> Self {
         Self {
             ymm: unsafe { _mm256_set1_ps(value) },
-        }
-    }
-
-    /// Loads vector from aligned array pointed by `addr`.
-    ///
-    /// # Safety
-    /// Like [`load`], requires `addr` to be not null.
-    /// Unlike [`load`], requires `addr` to be divisible by `32`, i.e. to be a `32`-byte aligned address.
-    ///
-    /// [`load`]: Self::load
-    #[inline(always)]
-    pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
-        Self {
-            ymm: _mm256_loadu_ps(addr as *const f32),
         }
     }
 
@@ -216,7 +216,7 @@ impl From<Vec256f> for __m256 {
 impl From<&[f32; 8]> for Vec256f {
     #[inline(always)]
     fn from(value: &[f32; 8]) -> Self {
-        unsafe { Self::load(value.as_ptr()) }
+        unsafe { Self::load(value) }
     }
 }
 
