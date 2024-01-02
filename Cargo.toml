@@ -3,3 +3,9 @@ authors = ["NamorNiradnug"]
 name = "vector-rust-library"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+name = "vrl"
+
+[dependencies]
+paste = "1.0.14"
