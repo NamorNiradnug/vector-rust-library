@@ -61,6 +61,12 @@ impl Vec256f {
     /// let vec = unsafe { Vec256f::load_aligned(&array.0) };
     /// assert_eq!(vec, 42.0.into());
     /// ```
+    ///
+    /// ```should_panic
+    /// # use vrl::Vec256f;
+    /// let zeros = unsafe { std::mem::zeroed::<[u8; 40]>() };
+    /// unsafe { Vec256f::load_aligned(zeros.as_ptr().offset(1) as *const [f32; 8]) };
+    /// ```
     #[inline(always)]
     pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
         Self {
