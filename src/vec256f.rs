@@ -64,7 +64,7 @@ impl Vec256f {
     #[inline(always)]
     pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
         Self {
-            ymm: _mm256_loadu_ps(addr as *const f32),
+            ymm: _mm256_load_ps(addr as *const f32),
         }
     }
 
