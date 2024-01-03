@@ -23,3 +23,5 @@ pub use vec4f::Vec4f;
 
 #[cfg(any(target_feature = "avx", doc))]
 pub use vec8f::Vec8f;
+
+pub use common::SIMDVector;

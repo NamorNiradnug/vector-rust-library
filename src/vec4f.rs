@@ -1,7 +1,11 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
-use crate::{common::SIMDVector, intrinsics::*};
+use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator};
 
+/// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
 #[derive(Clone, Copy)]
 pub struct Vec4f {
     xmm: __m128,
@@ -140,6 +144,35 @@ impl SIMDVector for Vec4f {
     const ELEMENTS: usize = 4;
 }
 
+impl Default for Vec4f {
+    /// Initializes all elements of returned vector with zero.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// assert_eq!(Vec4f::default(), 0.0.into());
+    /// ```
+    #[inline(always)]
+    fn default() -> Self {
+        unsafe { _mm_setzero_ps() }.into()
+    }
+}
+
+impl Neg for Vec4f {
+    type Output = Self;
+
+    /// Flips sign bit of each element including non-finite ones.
+    #[inline(always)]
+    fn neg(self) -> Self::Output {
+        unsafe { _mm_xor_ps(self.xmm, _mm_set1_ps(-0f32)) }.into()
+    }
+}
+
+vec_overload_operator!(Vec4f, Add, add, _mm_add_ps);
+vec_overload_operator!(Vec4f, Sub, sub, _mm_sub_ps);
+vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps);
+vec_overload_operator!(Vec4f, Div, div, _mm_div_ps);
+
 impl From<__m128> for Vec4f {
     fn from(value: __m128) -> Self {
         Self { xmm: value }
@@ -175,6 +208,12 @@ impl From<&Vec4f> for [f32; 4] {
             value.store(result.as_mut_ptr());
             result.assume_init()
         }
+    }
+}
+
+impl From<Vec4f> for [f32; 4] {
+    fn from(value: Vec4f) -> Self {
+        (&value).into()
     }
 }
 
@@ -219,4 +258,25 @@ impl Debug for Vec4f {
         }
         debug_tuple.finish()
     }
+}
+
+#[test]
+#[inline(never)] // in order to find the function in disassembled binary
+fn it_works() {
+    let a: Vec4f = 1.0.into();
+    assert_eq!(Into::<[f32; 4]>::into(a), [1.0; 4]);
+    assert_eq!(a, [1.0; 4].into());
+
+    let b = 2.0 * a;
+    assert_ne!(a, b);
+
+    let mut c = b / 2.0;
+    assert_eq!(a, c);
+
+    c += Vec4f::from(&[1.0, 0.0, 2.0, 0.0]);
+    let d = -c;
+
+    const EXPECTED_D: [f32; 4] = [-2.0, -1.0, -3.0, -1.0];
+    assert_eq!(d, EXPECTED_D.into());
+    assert_eq!(Into::<[f32; 4]>::into(d), EXPECTED_D);
 }

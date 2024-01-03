@@ -26,14 +26,14 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nigtly
           override: true
           target: i686-unknown-linux-gnu
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
           command: check
-          args: --target i686-unknown-linux-gnu
+          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
 
   test:
     name: Test Suite
@@ -57,14 +57,14 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
           target: i686-unknown-linux-gnu
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
           command: test
-          args: --target i686-unknown-linux-gnu
+          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
 
   fmt:
     name: Rustfmt
