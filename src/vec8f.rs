@@ -1,41 +1,33 @@
-#[cfg(target_arch = "x86_64")]
-use core::arch::x86_64::*;
-
-#[cfg(target_arch = "x86")]
-use core::arch::x86::*;
-
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::{common::SIMDVector, macros::vec_overload_operator};
+use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator};
 
 /// Represents a packed vector of 8 single-precision floating-point values.
 /// [`__m256`] wrapper.
 #[derive(Clone, Copy)]
-pub struct Vec256f {
+pub struct Vec8f {
     ymm: __m256,
 }
 
-impl Vec256f {
+impl Vec8f {
     /// Initializes elements of returned vector with given values.
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
+    /// # use vrl::Vec8f;
     /// assert_eq!(
-    ///     Vec256f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0),
+    ///     Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0),
     ///     [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0].into()
     /// );
     /// ```
     #[inline(always)]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
-        Self {
-            ymm: unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) },
-        }
+        unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) }.into()
     }
 
     /// Loads vector from array pointer by `addr`.
@@ -46,15 +38,13 @@ impl Vec256f {
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
+    /// # use vrl::Vec8f;
     /// let array = [42.0; 8];
-    /// let vec = unsafe { Vec256f::load(&array) };
+    /// let vec = unsafe { Vec8f::load(&array) };
     /// ```
     #[inline(always)]
     pub unsafe fn load(addr: *const [f32; 8]) -> Self {
-        Self {
-            ymm: _mm256_loadu_ps(addr as *const f32),
-        }
+        _mm256_loadu_ps(addr as *const f32).into()
     }
 
     /// Loads vector from aligned array pointed by `addr`.
@@ -67,25 +57,23 @@ impl Vec256f {
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
+    /// # use vrl::Vec8f;
     /// #[repr(align(32))]
     /// struct AlignedArray([f32; 8]);
     ///
     /// let array = AlignedArray([42.0; 8]);
-    /// let vec = unsafe { Vec256f::load_aligned(&array.0) };
+    /// let vec = unsafe { Vec8f::load_aligned(&array.0) };
     /// assert_eq!(vec, 42.0.into());
     /// ```
     ///
     /// ```should_panic
-    /// # use vrl::Vec256f;
+    /// # use vrl::Vec8f;
     /// let zeros = unsafe { std::mem::zeroed::<[u8; 40]>() };
-    /// unsafe { Vec256f::load_aligned(zeros.as_ptr().offset(1) as *const [f32; 8]) };
+    /// unsafe { Vec8f::load_aligned(zeros.as_ptr().offset(1) as *const [f32; 8]) };
     /// ```
     #[inline(always)]
     pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
-        Self {
-            ymm: _mm256_load_ps(addr as *const f32),
-        }
+        _mm256_load_ps(addr as *const f32).into()
     }
 
     /// Returns vector with all its elements initialized with a given `value`, i.e. broadcasts
@@ -93,17 +81,15 @@ impl Vec256f {
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
+    /// # use vrl::Vec8f;
     /// assert_eq!(
-    ///     Vec256f::broadcast(42.0),
+    ///     Vec8f::broadcast(42.0),
     ///     [42.0; 8].into()
     /// );
     /// ```
     #[inline(always)]
     pub fn broadcast(value: f32) -> Self {
-        Self {
-            ymm: unsafe { _mm256_set1_ps(value) },
-        }
+        unsafe { _mm256_set1_ps(value) }.into()
     }
 
     /// Stores vector into array at given address.
@@ -146,64 +132,66 @@ impl Vec256f {
     pub fn extract(&self, array: &mut [f32; 8]) {
         unsafe { self.store(array) }
     }
+
+    /// Calculates the sum of all elements of vector.
+    #[inline(always)]
+    pub fn horizontal_add(self) -> f32 {
+        todo!()
+    }
 }
 
-impl SIMDVector for Vec256f {
+impl SIMDVector for Vec8f {
     type Underlying = __m256;
     type Element = f32;
     const ELEMENTS: usize = 8;
 }
 
-impl Default for Vec256f {
+impl Default for Vec8f {
     /// Initializes all elements of returned vector with zero.
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
-    /// assert_eq!(Vec256f::default(), 0.0.into());
+    /// # use vrl::Vec8f;
+    /// assert_eq!(Vec8f::default(), 0.0.into());
     /// ```
     #[inline(always)]
     fn default() -> Self {
-        Self {
-            ymm: unsafe { _mm256_setzero_ps() },
-        }
+        unsafe { _mm256_setzero_ps() }.into()
     }
 }
 
-impl Neg for Vec256f {
+impl Neg for Vec8f {
     type Output = Self;
 
     /// Flips sign bit of each element including non-finite ones.
     #[inline(always)]
     fn neg(self) -> Self::Output {
-        Self {
-            ymm: unsafe { _mm256_xor_ps(self.ymm, _mm256_set1_ps(-0f32)) },
-        }
+        unsafe { _mm256_xor_ps(self.ymm, _mm256_set1_ps(-0f32)) }.into()
     }
 }
 
-vec_overload_operator!(Vec256f, Add, add, _mm256_add_ps);
-vec_overload_operator!(Vec256f, Sub, sub, _mm256_sub_ps);
-vec_overload_operator!(Vec256f, Mul, mul, _mm256_mul_ps);
-vec_overload_operator!(Vec256f, Div, div, _mm256_div_ps);
+vec_overload_operator!(Vec8f, Add, add, _mm256_add_ps);
+vec_overload_operator!(Vec8f, Sub, sub, _mm256_sub_ps);
+vec_overload_operator!(Vec8f, Mul, mul, _mm256_mul_ps);
+vec_overload_operator!(Vec8f, Div, div, _mm256_div_ps);
 
-impl From<__m256> for Vec256f {
-    /// Wraps given `value` into [`Vec256f`].
+impl From<__m256> for Vec8f {
+    /// Wraps given `value` into [`Vec8f`].
     #[inline(always)]
     fn from(value: __m256) -> Self {
         Self { ymm: value }
     }
 }
 
-impl From<Vec256f> for __m256 {
+impl From<Vec8f> for __m256 {
     /// Unwraps given vector into raw [`__m256`] value.
     #[inline(always)]
-    fn from(value: Vec256f) -> Self {
+    fn from(value: Vec8f) -> Self {
         value.ymm
     }
 }
 
-impl From<&[f32; 8]> for Vec256f {
+impl From<&[f32; 8]> for Vec8f {
     /// Does same as [`load`](Self::load).
     #[inline(always)]
     fn from(value: &[f32; 8]) -> Self {
@@ -211,16 +199,16 @@ impl From<&[f32; 8]> for Vec256f {
     }
 }
 
-impl From<[f32; 8]> for Vec256f {
+impl From<[f32; 8]> for Vec8f {
     #[inline(always)]
     fn from(value: [f32; 8]) -> Self {
         (&value).into()
     }
 }
 
-impl From<&Vec256f> for [f32; 8] {
+impl From<&Vec8f> for [f32; 8] {
     #[inline(always)]
-    fn from(value: &Vec256f) -> Self {
+    fn from(value: &Vec8f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
             value.store(result.as_mut_ptr());
@@ -229,13 +217,13 @@ impl From<&Vec256f> for [f32; 8] {
     }
 }
 
-impl From<Vec256f> for [f32; 8] {
-    fn from(value: Vec256f) -> Self {
+impl From<Vec8f> for [f32; 8] {
+    fn from(value: Vec8f) -> Self {
         (&value).into()
     }
 }
 
-impl From<f32> for Vec256f {
+impl From<f32> for Vec8f {
     /// Does same as [`broadcast`](Self::broadcast).
     #[inline(always)]
     fn from(value: f32) -> Self {
@@ -243,20 +231,21 @@ impl From<f32> for Vec256f {
     }
 }
 
-impl PartialEq for Vec256f {
+impl PartialEq for Vec8f {
     /// Checks whether all elements of vectors are equal.
-    /// Note that comparing with [`NaN`](`f32::NAN`) always evaluates `false`.
+    ///
+    /// __Note__: when [`NaN`](`f32::NAN`) is an element of one of the operands the result is always `false`.
     ///
     /// # Examples
     /// ```
-    /// # use vrl::Vec256f;
-    /// let a = Vec256f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// # use vrl::Vec8f;
+    /// let a = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
     /// assert_eq!(a, a);
     /// ```
     ///
     /// ```
-    /// # use vrl::Vec256f;
-    /// let a = Vec256f::broadcast(f32::NAN);
+    /// # use vrl::Vec8f;
+    /// let a = Vec8f::broadcast(f32::NAN);
     /// assert_ne!(a, a);
     /// ```
     fn eq(&self, other: &Self) -> bool {
@@ -267,9 +256,9 @@ impl PartialEq for Vec256f {
     }
 }
 
-impl Debug for Vec256f {
+impl Debug for Vec8f {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut debug_tuple = f.debug_tuple("Vec256f");
+        let mut debug_tuple = f.debug_tuple("Vec8f");
         for value in Into::<[f32; 8]>::into(self) {
             debug_tuple.field(&value);
         }
@@ -280,7 +269,7 @@ impl Debug for Vec256f {
 #[test]
 #[inline(never)] // in order to find the function in disassembled binary
 fn it_works() {
-    let a: Vec256f = 1.0.into();
+    let a: Vec8f = 1.0.into();
     assert_eq!(Into::<[f32; 8]>::into(a), [1.0; 8]);
     assert_eq!(a, [1.0; 8].into());
 
@@ -290,7 +279,7 @@ fn it_works() {
     let mut c = b / 2.0;
     assert_eq!(a, c);
 
-    c += Vec256f::from(&[1.0, 0.0, 2.0, 0.0, 3.0, 0.0, 4.0, 0.0]);
+    c += Vec8f::from(&[1.0, 0.0, 2.0, 0.0, 3.0, 0.0, 4.0, 0.0]);
     let d = -c;
 
     const EXPECTED_D: [f32; 8] = [-2.0, -1.0, -3.0, -1.0, -4.0, -1.0, -5.0, -1.0];

@@ -18,6 +18,23 @@ jobs:
         with:
           command: check
 
+  check_32bits:
+    name: Check (32 bits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: i686-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: check
+          args: --target i686-unknown-linux-gnu
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest
@@ -31,6 +48,23 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+
+  test_32bits:
+    name: Test Suite (32 bits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: i686-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: test
+          args: --target i686-unknown-linux-gnu
 
   fmt:
     name: Rustfmt
