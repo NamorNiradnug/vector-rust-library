@@ -183,9 +183,16 @@ impl Vec8f {
     }
 
     /// Calculates the sum of all elements of vector.
+    ///
+    /// # Exmaple
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// assert_eq!(vec.sum(), 36.0);
+    /// ```
     #[inline(always)]
-    pub fn horizontal_add(self) -> f32 {
-        todo!()
+    pub fn sum(self) -> f32 {
+        (self.low() + self.high()).sum()
     }
 
     /// Returns the first four elements of vector.
@@ -321,6 +328,13 @@ impl From<f32> for Vec8f {
     #[inline(always)]
     fn from(value: f32) -> Self {
         Self::broadcast(value)
+    }
+}
+
+impl From<(Vec4f, Vec4f)> for Vec8f {
+    /// Does same as [`join`](Self::join).
+    fn from((low, high): (Vec4f, Vec4f)) -> Self {
+        Self::join(low, high)
     }
 }
 

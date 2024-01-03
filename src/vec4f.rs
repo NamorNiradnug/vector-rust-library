@@ -161,9 +161,23 @@ impl Vec4f {
     }
 
     /// Calculates the sum of all elements of vector.
+    ///
+    /// # Exmaple
+    /// ```
+    /// # use vrl::Vec4f;
+    /// assert_eq!(Vec4f::new(1.0, 2.0, 3.0, 4.0).sum(), 10.0);
+    /// ```
     #[inline(always)]
-    pub fn horizontal_add(self) -> f32 {
-        todo!()
+    pub fn sum(self) -> f32 {
+        // Acoording to Agner Fog, using `hadd` is inefficient.
+        // src: https://github.com/vectorclass/version2/blob/master/vectorf128.h#L1043
+        unsafe {
+            let t1 = _mm_movehl_ps(self.xmm, self.xmm);
+            let t2 = _mm_add_ps(self.xmm, t1);
+            let t3 = _mm_shuffle_ps(t2, t2, 1);
+            let t4 = _mm_add_ss(t2, t3);
+            _mm_cvtss_f32(t4)
+        }
     }
 }
 
