@@ -8,4 +8,5 @@ mod common;
 mod macros;
 mod vec256f;
 
+#[cfg(any(target_feature = "avx", doc))]
 pub use vec256f::*;

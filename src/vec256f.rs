@@ -1,4 +1,9 @@
+#[cfg(target_arch = "x86_64")]
 use core::arch::x86_64::*;
+
+#[cfg(target_arch = "x86")]
+use core::arch::x86::*;
+
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
@@ -16,6 +21,15 @@ pub struct Vec256f {
 
 impl Vec256f {
     /// Initializes elements of returned vector with given values.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec256f;
+    /// assert_eq!(
+    ///     Vec256f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0),
+    ///     [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0].into()
+    /// );
+    /// ```
     #[inline(always)]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
@@ -111,6 +125,20 @@ impl Vec256f {
     #[inline(always)]
     pub unsafe fn store_aligned(&self, addr: *mut [f32; 8]) {
         _mm256_store_ps(addr as *mut f32, self.ymm)
+    }
+
+    /// Stores vector into aligned array at given address in uncached memory (non-temporal store).
+    /// This may be more efficient than [`store_aligned`] if it is unlikely that stored data will
+    /// stay in cache until it is read again, for instance, when storing large blocks of memory.
+    ///
+    /// # Safety
+    /// Has same requirements as [`store_aligned`]: `addr` must be valid and
+    /// divisible by `32`, i.e. to be a 32-bytes aligned address.
+    ///
+    /// [`store_aligned`]: Self::store_aligned
+    #[inline(always)]
+    pub unsafe fn store_non_temporal(&self, addr: *mut [f32; 8]) {
+        _mm256_stream_ps(addr as *mut f32, self.ymm)
     }
 
     /// Stores vector into given `array`.
