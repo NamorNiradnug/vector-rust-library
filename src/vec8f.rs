@@ -16,7 +16,7 @@ pub struct Vec8f {
 impl Vec8f {
     /// Initializes elements of returned vector with given values.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec8f;
     /// assert_eq!(
@@ -35,7 +35,7 @@ impl Vec8f {
     ///
     /// See also [`split`](Self::split).
     ///
-    /// # Exmaples
+    /// # Exmaple
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let a = Vec4f::new(1.0, 2.0, 3.0, 4.0);
@@ -56,7 +56,7 @@ impl Vec8f {
     /// # Safety
     /// `addr` must be a valid pointer.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec8f;
     /// let array = [42.0; 8];
@@ -85,11 +85,12 @@ impl Vec8f {
     /// let vec = unsafe { Vec8f::load_aligned(&array.0) };
     /// assert_eq!(vec, 42.0.into());
     /// ```
-    ///
+    /// In the following example `zeros` is aligned as `u16`, i.e. 2-bytes aligned.
+    /// Therefore `zeros.as_ptr().byte_add(1)` is an odd address and hence not divisible by `32`.
     /// ```should_panic
     /// # use vrl::Vec8f;
-    /// let zeros = unsafe { std::mem::zeroed::<[u8; 40]>() };
-    /// unsafe { Vec8f::load_aligned(zeros.as_ptr().offset(1) as *const [f32; 8]) };
+    /// let zeros = unsafe { std::mem::zeroed::<[u16; 20]>() };
+    /// unsafe { Vec8f::load_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 8]) };
     /// ```
     #[inline(always)]
     pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
@@ -99,7 +100,7 @@ impl Vec8f {
     /// Returns vector with all its elements initialized with a given `value`, i.e. broadcasts
     /// `value` to all elements of returned vector.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec8f;
     /// assert_eq!(
@@ -161,7 +162,7 @@ impl Vec8f {
 
     /// Returns the first four elements of vector.
     ///
-    /// # Exmaples
+    /// # Exmaple
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
@@ -174,7 +175,7 @@ impl Vec8f {
 
     /// Returns the last four element of vector.
     ///
-    /// # Exmaples
+    /// # Exmaple
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
@@ -189,7 +190,7 @@ impl Vec8f {
     ///
     /// See also [`join`](Self::join).
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use::vrl::{Vec4f, Vec8f};
     /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
@@ -213,7 +214,7 @@ impl SIMDVector for Vec8f {
 impl Default for Vec8f {
     /// Initializes all elements of returned vector with zero.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec8f;
     /// assert_eq!(Vec8f::default(), 0.0.into());

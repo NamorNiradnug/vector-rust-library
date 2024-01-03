@@ -15,7 +15,7 @@ pub struct Vec4f {
 impl Vec4f {
     /// Initializes elements of returned vector with given values.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec4f;
     /// assert_eq!(
@@ -35,7 +35,7 @@ impl Vec4f {
     /// # Safety
     /// `addr` must be a valid pointer.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec4f;
     /// let array = [42.0; 4];
@@ -64,11 +64,12 @@ impl Vec4f {
     /// let vec = unsafe { Vec4f::load_aligned(&array.0) };
     /// assert_eq!(vec, 42.0.into());
     /// ```
-    ///
+    /// In the following example `zeros` is aligned 2-bytes aligned. Therefore
+    /// `zeros.as_ptr().byte_add(1)` is an odd address and hence not divisible by `16`.
     /// ```should_panic
     /// # use vrl::Vec4f;
-    /// let zeros = unsafe { std::mem::zeroed::<[u8; 20]>() };
-    /// unsafe { Vec4f::load_aligned(zeros.as_ptr().offset(1) as *const [f32; 4]) };
+    /// let zeros = unsafe { std::mem::zeroed::<[u16; 10]>() };
+    /// unsafe { Vec4f::load_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 4]) };
     /// ```
     #[inline(always)]
     pub unsafe fn load_aligned(addr: *const [f32; 4]) -> Self {
@@ -78,7 +79,7 @@ impl Vec4f {
     /// Returns vector with all its elements initialized with a given `value`, i.e. broadcasts
     /// `value` to all elements of returned vector.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec4f;
     /// assert_eq!(
@@ -148,7 +149,7 @@ impl SIMDVector for Vec4f {
 impl Default for Vec4f {
     /// Initializes all elements of returned vector with zero.
     ///
-    /// # Examples
+    /// # Example
     /// ```
     /// # use vrl::Vec4f;
     /// assert_eq!(Vec4f::default(), 0.0.into());
