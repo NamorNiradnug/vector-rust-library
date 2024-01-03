@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    mem::MaybeUninit,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
@@ -174,12 +175,16 @@ vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps);
 vec_overload_operator!(Vec4f, Div, div, _mm_div_ps);
 
 impl From<__m128> for Vec4f {
+    /// Wraps given `value` into [`Vec4f`].
+    #[inline(always)]
     fn from(value: __m128) -> Self {
         Self { xmm: value }
     }
 }
 
 impl From<Vec4f> for __m128 {
+    /// Unwraps given vector into raw [`__m128`] value.
+    #[inline(always)]
     fn from(value: Vec4f) -> Self {
         value.xmm
     }
@@ -203,7 +208,7 @@ impl From<[f32; 4]> for Vec4f {
 impl From<&Vec4f> for [f32; 4] {
     #[inline(always)]
     fn from(value: &Vec4f) -> Self {
-        let mut result = std::mem::MaybeUninit::<Self>::uninit();
+        let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
             value.store(result.as_mut_ptr());
             result.assume_init()

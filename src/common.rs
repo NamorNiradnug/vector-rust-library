@@ -3,7 +3,7 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 /// Represents a packed vector containing [`ELEMENTS`](SIMDVector::ELEMENTS)
 /// values of type [`Element`].
 ///
-/// Converting [`Element`] to [`SIMDVector`] works as `broadcast`, i.e. assign
+/// Converting [`Element`] to [`SIMDVector`] works as `broadcast`, i.e. assigns
 /// the converting value to all elements of the vector.
 ///
 /// [`Default::default`] initializes all elements of vector with zero.
