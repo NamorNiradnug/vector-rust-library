@@ -26,7 +26,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nigtly
+          toolchain: nightly
           override: true
           target: i686-unknown-linux-gnu
       - uses: actions-rs/cargo@v1
