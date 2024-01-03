@@ -76,6 +76,33 @@ impl Vec4f {
         _mm_load_ps(addr as *const f32).into()
     }
 
+    /// Loads first 4 elements of `slice` if available otherwise initializes first elements of
+    /// returned vector with values of `slice` and rest elements with zeros.
+    ///
+    /// # Example
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let values = [1.0, 2.0, 3.0, 4.0, 5.0];
+    /// assert_eq!(
+    ///     Vec4f::load_partial(&values),
+    ///     Vec4f::from(&values[..4].try_into().unwrap())
+    /// );
+    /// assert_eq!(
+    ///     Vec4f::load_partial(&values[..2]),
+    ///     Vec4f::new(1.0, 2.0, 0.0, 0.0)  // note zeros here
+    /// );
+    /// ```
+    #[inline]
+    pub fn load_partial(slice: &[f32]) -> Self {
+        match slice.len() {
+            4.. => unsafe { Self::load(slice.as_ptr() as *const [f32; 4]) },
+            3 => Self::new(slice[0], slice[1], slice[2], 0.0),
+            2 => Self::new(slice[0], slice[1], 0.0, 0.0),
+            1 => Self::new(slice[0], 0.0, 0.0, 0.0),
+            0 => Self::default(),
+        }
+    }
+
     /// Returns vector with all its elements initialized with a given `value`, i.e. broadcasts
     /// `value` to all elements of returned vector.
     ///
@@ -259,7 +286,7 @@ impl PartialEq for Vec4f {
 impl Debug for Vec4f {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_tuple = f.debug_tuple("Vec4f");
-        for value in Into::<[f32; 4]>::into(self) {
+        for value in <[f32; 4]>::from(self) {
             debug_tuple.field(&value);
         }
         debug_tuple.finish()
@@ -270,7 +297,7 @@ impl Debug for Vec4f {
 #[inline(never)] // in order to find the function in disassembled binary
 fn it_works() {
     let a: Vec4f = 1.0.into();
-    assert_eq!(Into::<[f32; 4]>::into(a), [1.0; 4]);
+    assert_eq!(<[f32; 4]>::from(a), [1.0; 4]);
     assert_eq!(a, [1.0; 4].into());
 
     let b = 2.0 * a;
@@ -284,5 +311,5 @@ fn it_works() {
 
     const EXPECTED_D: [f32; 4] = [-2.0, -1.0, -3.0, -1.0];
     assert_eq!(d, EXPECTED_D.into());
-    assert_eq!(Into::<[f32; 4]>::into(d), EXPECTED_D);
+    assert_eq!(<[f32; 4]>::from(d), EXPECTED_D);
 }

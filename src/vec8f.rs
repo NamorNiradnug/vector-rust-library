@@ -97,6 +97,34 @@ impl Vec8f {
         _mm256_load_ps(addr as *const f32).into()
     }
 
+    /// Loads first 8 elements of `slice` if available otherwise initializes first elements of
+    /// returned vector with values of `slice` and rest elements with zeros.
+    ///
+    /// # Exmaple
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+    /// assert_eq!(
+    ///     Vec8f::load_partial(&values),
+    ///     Vec8f::from(&values[..8].try_into().unwrap())
+    /// );
+    /// assert_eq!(
+    ///     Vec8f::load_partial(&values[..5]),
+    ///     Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0, 0.0)  // note zeros here
+    /// );
+    /// ```
+    #[inline]
+    pub fn load_partial(slice: &[f32]) -> Self {
+        match slice.len() {
+            8.. => unsafe { Self::load(slice.as_ptr() as *const [f32; 8]) },
+            4.. => Self::join(
+                unsafe { Vec4f::load(slice.as_ptr() as *const [f32; 4]) },
+                Vec4f::load_partial(slice.split_at(4).1),
+            ),
+            0.. => Self::join(Vec4f::load_partial(slice), Vec4f::default()),
+        }
+    }
+
     /// Returns vector with all its elements initialized with a given `value`, i.e. broadcasts
     /// `value` to all elements of returned vector.
     ///
@@ -324,30 +352,49 @@ impl PartialEq for Vec8f {
 impl Debug for Vec8f {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_tuple = f.debug_tuple("Vec8f");
-        for value in Into::<[f32; 8]>::into(self) {
+        for value in <[f32; 8]>::from(self) {
             debug_tuple.field(&value);
         }
         debug_tuple.finish()
     }
 }
 
-#[test]
-#[inline(never)] // in order to find the function in disassembled binary
-fn it_works() {
-    let a: Vec8f = 1.0.into();
-    assert_eq!(Into::<[f32; 8]>::into(a), [1.0; 8]);
-    assert_eq!(a, [1.0; 8].into());
+#[cfg(test)]
+mod tests {
+    use crate::Vec8f;
 
-    let b = 2.0 * a;
-    assert_ne!(a, b);
+    #[test]
+    #[inline(never)] // in order to find the function in disassembled binary
+    fn it_works() {
+        let a: Vec8f = 1.0.into();
+        assert_eq!(<[f32; 8]>::from(a), [1.0; 8]);
+        assert_eq!(a, [1.0; 8].into());
 
-    let mut c = b / 2.0;
-    assert_eq!(a, c);
+        let b = 2.0 * a;
+        assert_ne!(a, b);
 
-    c += Vec8f::from(&[1.0, 0.0, 2.0, 0.0, 3.0, 0.0, 4.0, 0.0]);
-    let d = -c;
+        let mut c = b / 2.0;
+        assert_eq!(a, c);
 
-    const EXPECTED_D: [f32; 8] = [-2.0, -1.0, -3.0, -1.0, -4.0, -1.0, -5.0, -1.0];
-    assert_eq!(d, EXPECTED_D.into());
-    assert_eq!(Into::<[f32; 8]>::into(d), EXPECTED_D);
+        c += Vec8f::from(&[1.0, 0.0, 2.0, 0.0, 3.0, 0.0, 4.0, 0.0]);
+        let d = -c;
+
+        const EXPECTED_D: [f32; 8] = [-2.0, -1.0, -3.0, -1.0, -4.0, -1.0, -5.0, -1.0];
+        assert_eq!(d, EXPECTED_D.into());
+        assert_eq!(<[f32; 8]>::from(d), EXPECTED_D);
+    }
+
+    #[test]
+    fn test_load_partial() {
+        const VALUES: &[f32] = &[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+        for i in 0..8 {
+            let vec_values = <[f32; 8]>::from(Vec8f::load_partial(&VALUES[..i]));
+            assert_eq!(vec_values[..i], VALUES[..i]);
+            assert!(vec_values[i..].iter().all(|x| *x == 0.0));
+        }
+        assert_eq!(
+            Vec8f::load_partial(VALUES),
+            Vec8f::from(&VALUES[..8].try_into().unwrap())
+        );
+    }
 }
