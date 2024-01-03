@@ -4,7 +4,7 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator};
+use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator, Vec4f};
 
 /// Represents a packed vector of 8 single-precision floating-point values.
 /// [`__m256`] wrapper.
@@ -28,6 +28,26 @@ impl Vec8f {
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
         unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) }.into()
+    }
+
+    /// Joins two [`Vec4f`] into a single [`Vec8f`]. The first four elements of returned vector are
+    /// elements of `a` and the last four elements are elements of `b`.
+    ///
+    /// See also [`split`](Self::split).
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::{Vec4f, Vec8f};
+    /// let a = Vec4f::new(1.0, 2.0, 3.0, 4.0);
+    /// let b = Vec4f::new(5.0, 6.0, 7.0, 8.0);
+    /// let joined = Vec8f::join(a, b);
+    /// assert_eq!(a, joined.low());
+    /// assert_eq!(b, joined.high());
+    /// assert_eq!(joined.split(), (a, b));
+    /// ```
+    #[inline(always)]
+    pub fn join(a: Vec4f, b: Vec4f) -> Self {
+        unsafe { _mm256_set_m128(b.into(), a.into()) }.into()
     }
 
     /// Loads vector from array pointer by `addr`.
@@ -137,6 +157,50 @@ impl Vec8f {
     #[inline(always)]
     pub fn horizontal_add(self) -> f32 {
         todo!()
+    }
+
+    /// Returns the first four elements of vector.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::{Vec4f, Vec8f};
+    /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
+    /// assert_eq!(vec8.low(), Vec4f::broadcast(1.0));
+    /// ```
+    #[inline(always)]
+    pub fn low(self) -> Vec4f {
+        unsafe { _mm256_castps256_ps128(self.ymm) }.into()
+    }
+
+    /// Returns the last four element of vector.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::{Vec4f, Vec8f};
+    /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
+    /// assert_eq!(vec8.high(), Vec4f::broadcast(2.0));
+    /// ```
+    #[inline(always)]
+    pub fn high(self) -> Vec4f {
+        unsafe { _mm256_extractf128_ps(self.ymm, 1) }.into()
+    }
+
+    /// Splits vector into low and high halfs.
+    ///
+    /// See also [`join`](Self::join).
+    ///
+    /// # Examples
+    /// ```
+    /// # use::vrl::{Vec4f, Vec8f};
+    /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// let (low, high) = vec.split();
+    /// assert_eq!(low, vec.low());
+    /// assert_eq!(high, vec.high());
+    /// assert_eq!(Vec8f::join(low, high), vec);
+    /// ```
+    #[inline(always)]
+    pub fn split(self) -> (Vec4f, Vec4f) {
+        (self.low(), self.high())
     }
 }
 
