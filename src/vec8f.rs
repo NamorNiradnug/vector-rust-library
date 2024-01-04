@@ -18,7 +18,7 @@ use derive_more::{Add, Div, Mul, Sub};
 /// [`Vec4f`] values.
 #[derive(Clone, Copy)]
 #[cfg_attr(no_avx, derive(Add, Sub, Mul, Div), mul(forward), div(forward))]
-#[repr(transparent)]
+#[cfg_attr(avx, repr(transparent))]
 pub struct Vec8f {
     #[cfg(avx)]
     ymm: __m256,
@@ -195,7 +195,7 @@ impl Vec8f {
 
         #[cfg(no_avx)]
         {
-            let half = Vec4f::from(value);
+            let half = Vec4f::broadcast(value);
             (half, half).into()
         }
     }
