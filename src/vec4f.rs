@@ -247,9 +247,9 @@ impl From<[f32; 4]> for Vec4f {
     }
 }
 
-impl From<&Vec4f> for [f32; 4] {
+impl From<Vec4f> for [f32; 4] {
     #[inline(always)]
-    fn from(value: &Vec4f) -> Self {
+    fn from(value: Vec4f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
             value.store(result.as_mut_ptr());
@@ -258,9 +258,9 @@ impl From<&Vec4f> for [f32; 4] {
     }
 }
 
-impl From<Vec4f> for [f32; 4] {
-    fn from(value: Vec4f) -> Self {
-        (&value).into()
+impl From<&Vec4f> for [f32; 4] {
+    fn from(value: &Vec4f) -> Self {
+        unsafe { *(value as *const Vec4f as *const [f32; 4]) }
     }
 }
 
