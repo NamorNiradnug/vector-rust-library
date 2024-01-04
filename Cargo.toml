@@ -9,3 +9,4 @@ name = "vrl"
 
 [dependencies]
 paste = "1.0.14"
+derive_more = "0.99.17"

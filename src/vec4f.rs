@@ -211,10 +211,10 @@ impl Neg for Vec4f {
     }
 }
 
-vec_overload_operator!(Vec4f, Add, add, _mm_add_ps);
-vec_overload_operator!(Vec4f, Sub, sub, _mm_sub_ps);
-vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps);
-vec_overload_operator!(Vec4f, Div, div, _mm_div_ps);
+vec_overload_operator!(Vec4f, Add, add, _mm_add_ps, sse);
+vec_overload_operator!(Vec4f, Sub, sub, _mm_sub_ps, sse);
+vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps, sse);
+vec_overload_operator!(Vec4f, Div, div, _mm_div_ps, sse);
 
 impl From<__m128> for Vec4f {
     /// Wraps given `value` into [`Vec4f`].

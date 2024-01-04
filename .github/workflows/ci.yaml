@@ -19,7 +19,7 @@ jobs:
           command: check
 
   check_32bits:
-    name: Check (32 bits)
+    name: Check (32 bits; no AVX)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -34,6 +34,8 @@ jobs:
           use-cross: true
           command: check
           args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
+        env:
+          RUSTFLAGS: -C target-feature=-avx,-avx2
 
   test:
     name: Test Suite
@@ -50,7 +52,7 @@ jobs:
           command: test
 
   test_32bits:
-    name: Test Suite (32 bits)
+    name: Test Suite (32 bits; no AVX)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -65,6 +67,8 @@ jobs:
           use-cross: true
           command: test
           args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
+        env:
+          RUSTFLAGS: -C target-feature=-avx,-avx2
 
   fmt:
     name: Rustfmt

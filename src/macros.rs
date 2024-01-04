@@ -1,5 +1,6 @@
 macro_rules! vec_overload_operator {
-    ($vectype: ty, $op_trait: ident, $op_name: ident, $intrinsic: ident) => {
+    ($vectype: ty, $op_trait: ident, $op_name: ident, $intrinsic: ident, $basic_impl_condition: meta) => {
+        #[cfg($basic_impl_condition)]
         impl $op_trait for $vectype {
             type Output = Self;
             #[inline(always)]

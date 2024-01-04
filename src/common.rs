@@ -36,7 +36,7 @@ where
     Self::Underlying: From<Self>,
     Self::Element: Add<Self> + Sub<Self> + Mul<Self> + Div<Self>,
 {
-    /// Underlying intrinsic type.
+    /// Underlying intrinsic type or tuple of types implementing [`SIMDVector`].
     type Underlying;
 
     /// Type of a single element of [`SIMDVector`].
