@@ -18,6 +18,7 @@ use derive_more::{Add, Div, Mul, Sub};
 /// [`Vec4f`] values.
 #[derive(Clone, Copy)]
 #[cfg_attr(no_avx, derive(Add, Sub, Mul, Div), mul(forward), div(forward))]
+#[repr(transparent)]
 pub struct Vec8f {
     #[cfg(avx)]
     ymm: __m256,

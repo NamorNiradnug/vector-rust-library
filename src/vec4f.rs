@@ -8,6 +8,7 @@ use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator};
 
 /// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
 #[derive(Clone, Copy)]
+#[repr(transparent)]
 pub struct Vec4f {
     xmm: __m128,
 }
