@@ -13,7 +13,9 @@ use crate::intrinsics::*;
 use derive_more::{Add, Div, Mul, Sub};
 
 /// Represents a packed vector of 8 single-precision floating-point values.
-/// [`__m256`] wrapper.
+///
+/// On platforms with AVX support [`Vec8f`] is a [`__m256`] wrapper. Otherwise it is a pair of
+/// [`Vec4f`] values.
 #[derive(Clone, Copy)]
 #[cfg_attr(no_avx, derive(Add, Sub, Mul, Div), mul(forward), div(forward))]
 pub struct Vec8f {
