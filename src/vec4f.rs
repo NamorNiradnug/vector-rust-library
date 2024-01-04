@@ -115,10 +115,13 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub fn load_checked(data: &[f32]) -> Self {
-        Self::load(<&[f32; 4]>::try_from(data).expect("data must contain exactly 4 elements"))
+        Self::load(
+            data.try_into()
+                .expect("data must contain exactly 4 elements"),
+        )
     }
 
-    /// Loads the first four element of `data` into vector.
+    /// Loads the first four elements of `data` into vector.
     ///
     /// # Panics
     /// Panics if `data` contains less than four elements.
@@ -139,7 +142,7 @@ impl Vec4f {
     #[inline(always)]
     pub fn load_prefix(data: &[f32]) -> Self {
         if data.len() < 4 {
-            panic!("data must contain at least four elements");
+            panic!("data must contain at least 4 elements");
         }
         unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 4]) }
     }
@@ -226,6 +229,82 @@ impl Vec4f {
     #[inline(always)]
     pub fn store(&self, array: &mut [f32; 4]) {
         unsafe { self.store_ptr(array) }
+    }
+
+    /// Checkes that `slice` contains exactly four elements and store elements of vector there.
+    ///
+    /// # Panics
+    /// Panics if `slice.len()` isn't `4`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let mut data = [-1.0; 4];
+    /// Vec4f::default().store_checked(&mut data);
+    /// assert_eq!(data, [0.0; 4]);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec4f;
+    /// let mut data = [-1.0; 3];
+    /// Vec4f::default().store_checked(&mut data);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec4f;
+    /// let mut data = [-1.0; 5];
+    /// Vec4f::default().store_checked(&mut data);
+    /// ```
+    pub fn store_checked(&self, slice: &mut [f32]) {
+        self.store(
+            slice
+                .try_into()
+                .expect("slice must contain at least 4 elements"),
+        )
+    }
+
+    /// Stores elements of vector into the first four elements of `slice`.
+    ///
+    /// # Panics
+    /// Panics if `slice` contains less then four elements.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let mut data = [-1.0; 5];
+    /// Vec4f::broadcast(2.0).store_prefix(&mut data);
+    /// assert_eq!(data, [2.0, 2.0, 2.0, 2.0, -1.0]);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec4f;
+    /// let mut data = [-1.0; 3];
+    /// Vec4f::default().store_prefix(&mut data);
+    /// ```
+    #[inline(always)]
+    pub fn store_prefix(&self, slice: &mut [f32]) {
+        if slice.len() < 4 {
+            panic!("slice.len() must at least 4");
+        }
+        unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 4]) };
+    }
+    /// Stores `min(4, slice.len())` elements of vector into prefix of `slice`.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let mut data = [0.0; 3];
+    /// Vec4f::broadcast(1.0).store_partial(&mut data);
+    /// assert_eq!(data, [1.0; 3]);
+    /// ```
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let mut data = [0.0; 5];
+    /// Vec4f::broadcast(1.0).store_partial(&mut data);
+    /// assert_eq!(data, [1.0, 1.0, 1.0, 1.0, 0.0]);  // note last zero
+    /// ```
+    pub fn store_partial(&self, slice: &mut [f32]) {
+        match slice.len() {
+            4.. => unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) },
+            _ => slice.copy_from_slice(&<[f32; 4]>::from(self)[..slice.len()]),
+        }
     }
 
     /// Calculates the sum of all elements of vector.

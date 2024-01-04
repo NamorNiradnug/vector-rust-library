@@ -185,7 +185,10 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn load_checked(data: &[f32]) -> Self {
-        Self::load(<&[f32; 8]>::try_from(data).expect("data must contain exactly 8 elements"))
+        Self::load(
+            data.try_into()
+                .expect("data must contain exactly 8 elements"),
+        )
     }
 
     /// Loads the first eight element of `data` into vector.
@@ -209,7 +212,7 @@ impl Vec8f {
     #[inline(always)]
     pub fn load_prefix(data: &[f32]) -> Self {
         if data.len() < 8 {
-            panic!("data must contain at least four elements");
+            panic!("data must contain at least 8 elements");
         }
         unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 8]) }
     }
@@ -338,6 +341,88 @@ impl Vec8f {
         unsafe { self.store_ptr(array) }
     }
 
+    /// Checkes that `slice` contains exactly eight elements and store elements of vector there.
+    ///
+    /// # Panics
+    /// Panics if `slice.len()` isn't `8`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let mut data = [-1.0; 8];
+    /// Vec8f::default().store_checked(&mut data);
+    /// assert_eq!(data, [0.0; 8]);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// let mut data = [-1.0; 7];
+    /// Vec8f::default().store_checked(&mut data);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// let mut data = [-1.0; 9];
+    /// Vec8f::default().store_checked(&mut data);
+    /// ```
+    pub fn store_checked(&self, slice: &mut [f32]) {
+        self.store(
+            slice
+                .try_into()
+                .expect("slice must contain at least 8 elements"),
+        )
+    }
+
+    /// Stores elements of vector into the first eight elements of `slice`.
+    ///
+    /// # Panics
+    /// Panics if `slice` contains less then eight elements.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let mut data = [-1.0; 9];
+    /// Vec8f::broadcast(2.0).store_prefix(&mut data);
+    /// assert_eq!(data, [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, -1.0]);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// let mut data = [-1.0; 7];
+    /// Vec8f::default().store_prefix(&mut data);
+    /// ```
+    #[inline(always)]
+    pub fn store_prefix(&self, slice: &mut [f32]) {
+        if slice.len() < 8 {
+            panic!("slice.len() must at least 8");
+        }
+        unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 8]) };
+    }
+
+    /// Stores `min(8, slice.len())` elements of vector into prefix of `slice`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let mut data = [0.0; 7];
+    /// Vec8f::broadcast(1.0).store_partial(&mut data);
+    /// assert_eq!(data, [1.0; 7]);
+    /// ```
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let mut data = [0.0; 9];
+    /// Vec8f::broadcast(1.0).store_partial(&mut data);
+    /// assert_eq!(data, [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]);  // note last zero
+    /// ```
+    #[inline]
+    pub fn store_partial(&self, slice: &mut [f32]) {
+        match slice.len() {
+            8.. => unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 8]) },
+            4.. => {
+                unsafe { self.low().store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) };
+                self.high().store_partial(slice.split_at_mut(4).1)
+            }
+            0.. => self.low().store_partial(slice),
+        }
+    }
+
     /// Calculates the sum of all elements of vector.
     ///
     /// # Exmaple
@@ -372,7 +457,7 @@ impl Vec8f {
         }
     }
 
-    /// Returns the last four element of vector.
+    /// Returns the last four elements of vector.
     ///
     /// # Exmaple
     /// ```
