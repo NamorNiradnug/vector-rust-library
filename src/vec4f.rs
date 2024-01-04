@@ -310,23 +310,28 @@ impl Debug for Vec4f {
     }
 }
 
-#[test]
-#[inline(never)] // in order to find the function in disassembled binary
-fn it_works() {
-    let a: Vec4f = 1.0.into();
-    assert_eq!(<[f32; 4]>::from(a), [1.0; 4]);
-    assert_eq!(a, [1.0; 4].into());
+#[cfg(test)]
+mod tests {
+    use super::Vec4f;
 
-    let b = 2.0 * a;
-    assert_ne!(a, b);
+    #[test]
+    #[inline(never)] // in order to find the function in disassembled binary
+    fn it_works() {
+        let a: Vec4f = 1.0.into();
+        assert_eq!(<[f32; 4]>::from(a), [1.0; 4]);
+        assert_eq!(a, [1.0; 4].into());
 
-    let mut c = b / 2.0;
-    assert_eq!(a, c);
+        let b = 2.0 * a;
+        assert_ne!(a, b);
 
-    c += Vec4f::from(&[1.0, 0.0, 2.0, 0.0]);
-    let d = -c;
+        let mut c = b / 2.0;
+        assert_eq!(a, c);
 
-    const EXPECTED_D: [f32; 4] = [-2.0, -1.0, -3.0, -1.0];
-    assert_eq!(d, EXPECTED_D.into());
-    assert_eq!(<[f32; 4]>::from(d), EXPECTED_D);
+        c += Vec4f::from(&[1.0, 0.0, 2.0, 0.0]);
+        let d = -c;
+
+        const EXPECTED_D: [f32; 4] = [-2.0, -1.0, -3.0, -1.0];
+        assert_eq!(d, EXPECTED_D.into());
+        assert_eq!(<[f32; 4]>::from(d), EXPECTED_D);
+    }
 }
