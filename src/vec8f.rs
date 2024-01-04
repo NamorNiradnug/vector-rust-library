@@ -444,6 +444,7 @@ impl From<Vec8f> for [f32; 8] {
 }
 
 impl From<&Vec8f> for [f32; 8] {
+    #[inline(always)]
     fn from(value: &Vec8f) -> Self {
         unsafe { *(value as *const Vec8f as *const [f32; 8]) }
     }
@@ -459,6 +460,7 @@ impl From<f32> for Vec8f {
 
 impl From<(Vec4f, Vec4f)> for Vec8f {
     /// Does same as [`join`](Self::join).
+    #[inline(always)]
     fn from((low, high): (Vec4f, Vec4f)) -> Self {
         Self::join(low, high)
     }
@@ -466,6 +468,7 @@ impl From<(Vec4f, Vec4f)> for Vec8f {
 
 impl From<Vec8f> for (Vec4f, Vec4f) {
     /// Does same as [`split`](Vec8f::split).
+    #[inline(always)]
     fn from(vec: Vec8f) -> (Vec4f, Vec4f) {
         vec.split()
     }
@@ -488,6 +491,7 @@ impl PartialEq for Vec8f {
     /// let a = Vec8f::broadcast(f32::NAN);
     /// assert_ne!(a, a);
     /// ```
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         #[cfg(avx)]
         {

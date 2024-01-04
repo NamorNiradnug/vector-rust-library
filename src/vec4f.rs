@@ -259,6 +259,7 @@ impl From<Vec4f> for [f32; 4] {
 }
 
 impl From<&Vec4f> for [f32; 4] {
+    #[inline(always)]
     fn from(value: &Vec4f) -> Self {
         unsafe { *(value as *const Vec4f as *const [f32; 4]) }
     }
@@ -282,6 +283,7 @@ impl PartialEq for Vec4f {
     /// # use vrl::Vec4f;
     /// let a = Vec4f::new(1.0, 2.0, 3.0, 4.0);
     /// assert_eq!(a, a);
+    /// assert_ne!(a, Vec4f::default());
     /// ```
     ///
     /// ```
@@ -289,10 +291,11 @@ impl PartialEq for Vec4f {
     /// let a = Vec4f::broadcast(f32::NAN);
     /// assert_ne!(a, a);
     /// ```
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         unsafe {
-            let cmp_result = _mm_cmp_ps::<0>(self.xmm, other.xmm);
-            _mm_testz_ps(cmp_result, cmp_result) == 0
+            let cmp_result = _mm_cmpeq_ps(self.xmm, other.xmm);
+            _mm_movemask_ps(cmp_result) == 0x0F
         }
     }
 }
