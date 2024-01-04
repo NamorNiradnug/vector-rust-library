@@ -92,10 +92,10 @@ impl Vec8f {
     /// ```
     /// # use vrl::Vec8f;
     /// let array = [42.0; 8];
-    /// let vec = unsafe { Vec8f::load(&array) };
+    /// let vec = unsafe { Vec8f::load_ptr(&array) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load(addr: *const [f32; 8]) -> Self {
+    pub unsafe fn load_ptr(addr: *const [f32; 8]) -> Self {
         #[cfg(avx)]
         {
             _mm256_loadu_ps(addr as *const f32).into()
@@ -111,10 +111,10 @@ impl Vec8f {
     /// Loads vector from aligned array pointed by `addr`.
     ///
     /// # Safety
-    /// Like [`load`], requires `addr` to be valid.
-    /// Unlike [`load`], requires `addr` to be divisible by `32`, i.e. to be a `32`-bytes aligned address.
+    /// Like [`load_ptr`], requires `addr` to be valid.
+    /// Unlike [`load_ptr`], requires `addr` to be divisible by `32`, i.e. to be a `32`-bytes aligned address.
     ///
-    /// [`load`]: Self::load
+    /// [`load_ptr`]: Self::load_ptr
     ///
     /// # Examples
     /// ```
@@ -123,7 +123,7 @@ impl Vec8f {
     /// struct AlignedArray([f32; 8]);
     ///
     /// let array = AlignedArray([42.0; 8]);
-    /// let vec = unsafe { Vec8f::load_aligned(&array.0) };
+    /// let vec = unsafe { Vec8f::load_ptr_aligned(&array.0) };
     /// assert_eq!(vec, Vec8f::broadcast(42.0));
     /// ```
     /// In the following example `zeros` is aligned as `u16`, i.e. 2-bytes aligned.
@@ -131,10 +131,10 @@ impl Vec8f {
     /// ```should_panic
     /// # use vrl::Vec8f;
     /// let zeros = unsafe { std::mem::zeroed::<[u16; 20]>() };
-    /// unsafe { Vec8f::load_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 8]) };
+    /// unsafe { Vec8f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 8]) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load_aligned(addr: *const [f32; 8]) -> Self {
+    pub unsafe fn load_ptr_aligned(addr: *const [f32; 8]) -> Self {
         #[cfg(avx)]
         {
             _mm256_load_ps(addr as *const f32).into()
@@ -147,8 +147,75 @@ impl Vec8f {
         }
     }
 
-    /// Loads first 8 elements of `slice` if available otherwise initializes first elements of
-    /// returned vector with values of `slice` and rest elements with zeros.
+    /// Loads values of returned vector from given data.
+    ///
+    /// # Exmaple
+    /// ```
+    /// # use vrl::Vec8f;
+    /// assert_eq!(
+    ///     Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0),
+    ///     Vec8f::load(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+    /// );
+    /// ```
+    #[inline(always)]
+    pub fn load(data: &[f32; 8]) -> Self {
+        unsafe { Self::load_ptr(data) }
+    }
+
+    /// Checks that data contains exactly eight elements and loads them into vector.
+    ///
+    /// # Panics
+    /// Panics if `data.len()` isn't `8`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// assert_eq!(
+    ///     Vec8f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+    ///     Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0)
+    /// );
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// Vec8f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// Vec8f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
+    /// ```
+    #[inline(always)]
+    pub fn load_checked(data: &[f32]) -> Self {
+        Self::load(<&[f32; 8]>::try_from(data).expect("data must contain exactly 8 elements"))
+    }
+
+    /// Loads the first eight element of `data` into vector.
+    ///
+    /// # Panics
+    /// Panics if `data` contains less than eight elements.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// assert_eq!(
+    ///     Vec8f::load_prefix(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]),
+    ///     Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0)
+    /// );
+    /// ```
+    ///
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// Vec8f::load_prefix(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
+    /// ```
+    #[inline(always)]
+    pub fn load_prefix(data: &[f32]) -> Self {
+        if data.len() < 8 {
+            panic!("data must contain at least four elements");
+        }
+        unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 8]) }
+    }
+
+    /// Loads first 8 elements of `data` if available otherwise initializes first elements of
+    /// returned vector with values of `data` and rest elements with zeros.
     ///
     /// # Exmaple
     /// ```
@@ -164,14 +231,14 @@ impl Vec8f {
     /// );
     /// ```
     #[inline]
-    pub fn load_partial(slice: &[f32]) -> Self {
-        match slice.len() {
-            8.. => unsafe { Self::load(slice.as_ptr() as *const [f32; 8]) },
+    pub fn load_partial(data: &[f32]) -> Self {
+        match data.len() {
+            8.. => unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 8]) },
             4.. => Self::join(
-                unsafe { Vec4f::load(slice.as_ptr() as *const [f32; 4]) },
-                Vec4f::load_partial(slice.split_at(4).1),
+                unsafe { Vec4f::load_ptr(data.as_ptr() as *const [f32; 4]) },
+                Vec4f::load_partial(data.split_at(4).1),
             ),
-            0.. => Self::join(Vec4f::load_partial(slice), Vec4f::default()),
+            0.. => Self::join(Vec4f::load_partial(data), Vec4f::default()),
         }
     }
 
@@ -205,7 +272,7 @@ impl Vec8f {
     /// # Safety
     /// `addr` must be a valid pointer.
     #[inline(always)]
-    pub unsafe fn store(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr(&self, addr: *mut [f32; 8]) {
         #[cfg(avx)]
         {
             _mm256_storeu_ps(addr as *mut f32, self.ymm);
@@ -222,12 +289,12 @@ impl Vec8f {
     /// Stores vector into aligned array at given address.
     ///
     /// # Safety
-    /// Like [`store`], requires `addr` to be valid.
-    /// Unlike [`store`], requires `addr` to be divisible by `32`, i.e. to be a 32-bytes aligned address.
+    /// Like [`store_ptr`], requires `addr` to be valid.
+    /// Unlike [`store_ptr`], requires `addr` to be divisible by `32`, i.e. to be a 32-bytes aligned address.
     ///
-    /// [`store`]: Self::store
+    /// [`store_ptr`]: Self::store_ptr
     #[inline(always)]
-    pub unsafe fn store_aligned(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr_aligned(&self, addr: *mut [f32; 8]) {
         #[cfg(avx)]
         {
             _mm256_store_ps(addr as *mut f32, self.ymm);
@@ -242,16 +309,16 @@ impl Vec8f {
     }
 
     /// Stores vector into aligned array at given address in uncached memory (non-temporal store).
-    /// This may be more efficient than [`store_aligned`] if it is unlikely that stored data will
+    /// This may be more efficient than [`store_ptr_aligned`] if it is unlikely that stored data will
     /// stay in cache until it is read again, for instance, when storing large blocks of memory.
     ///
     /// # Safety
-    /// Has same requirements as [`store_aligned`]: `addr` must be valid and
+    /// Has same requirements as [`store_ptr_aligned`]: `addr` must be valid and
     /// divisible by `32`, i.e. to be a 32-bytes aligned address.
     ///
-    /// [`store_aligned`]: Self::store_aligned
+    /// [`store_ptr_aligned`]: Self::store_ptr_aligned
     #[inline(always)]
-    pub unsafe fn store_non_temporal(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut [f32; 8]) {
         #[cfg(avx)]
         {
             _mm256_stream_ps(addr as *mut f32, self.ymm)
@@ -267,8 +334,8 @@ impl Vec8f {
 
     /// Stores vector into given `array`.
     #[inline(always)]
-    pub fn extract(&self, array: &mut [f32; 8]) {
-        unsafe { self.store(array) }
+    pub fn store(&self, array: &mut [f32; 8]) {
+        unsafe { self.store_ptr(array) }
     }
 
     /// Calculates the sum of all elements of vector.
@@ -422,7 +489,7 @@ impl From<&[f32; 8]> for Vec8f {
     /// Does same as [`load`](Self::load).
     #[inline(always)]
     fn from(value: &[f32; 8]) -> Self {
-        unsafe { Self::load(value) }
+        Self::load(value)
     }
 }
 
@@ -438,7 +505,7 @@ impl From<Vec8f> for [f32; 8] {
     fn from(value: Vec8f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
-            value.store(result.as_mut_ptr());
+            value.store_ptr(result.as_mut_ptr());
             result.assume_init()
         }
     }
