@@ -143,7 +143,11 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *const [f32; 4];
-            (Vec4f::load_ptr_aligned(addr), Vec4f::load_ptr_aligned(addr.add(1))).into()
+            (
+                Vec4f::load_ptr_aligned(addr),
+                Vec4f::load_ptr_aligned(addr.add(1)),
+            )
+                .into()
         }
     }
 
