@@ -104,7 +104,7 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *const [f32; 4];
-            (Vec4f::load(addr), Vec4f::load(addr.add(1))).into()
+            (Vec4f::load_ptr(addr), Vec4f::load_ptr(addr.add(1))).into()
         }
     }
 
@@ -143,7 +143,7 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *const [f32; 4];
-            (Vec4f::load_aligned(addr), Vec4f::load_aligned(addr.add(1))).into()
+            (Vec4f::load_ptr_aligned(addr), Vec4f::load_ptr_aligned(addr.add(1))).into()
         }
     }
 
@@ -284,8 +284,8 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *mut [f32; 4];
-            self.low().store(addr);
-            self.high().store(addr.add(1));
+            self.low().store_ptr(addr);
+            self.high().store_ptr(addr.add(1));
         }
     }
 
@@ -306,8 +306,8 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *mut [f32; 4];
-            self.low().store(addr);
-            self.high().store(addr.add(1));
+            self.low().store_ptr_aligned(addr);
+            self.high().store_ptr_aligned(addr.add(1));
         }
     }
 
@@ -330,8 +330,8 @@ impl Vec8f {
         #[cfg(no_avx)]
         {
             let addr = addr as *mut [f32; 4];
-            self.low().store_non_temporal(addr);
-            self.high().store_non_temporal(addr.add(1));
+            self.low().store_ptr_non_temporal(addr);
+            self.high().store_ptr_non_temporal(addr.add(1));
         }
     }
 
