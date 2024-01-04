@@ -14,7 +14,6 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 pub trait SIMDVector
 where
     Self: From<Self::Underlying>
-        + From<Self::Element>
         + Default
         + Neg<Output = Self>
         + Add<Self>

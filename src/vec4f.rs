@@ -62,7 +62,7 @@ impl Vec4f {
     ///
     /// let array = AlignedArray([42.0; 4]);
     /// let vec = unsafe { Vec4f::load_aligned(&array.0) };
-    /// assert_eq!(vec, 42.0.into());
+    /// assert_eq!(vec, Vec4f::broadcast(42.0));
     /// ```
     /// In the following example `zeros` is aligned 2-bytes aligned. Therefore
     /// `zeros.as_ptr().byte_add(1)` is an odd address and hence not divisible by `16`.
@@ -193,7 +193,7 @@ impl Default for Vec4f {
     /// # Example
     /// ```
     /// # use vrl::Vec4f;
-    /// assert_eq!(Vec4f::default(), 0.0.into());
+    /// assert_eq!(Vec4f::default(), Vec4f::broadcast(0.0));
     /// ```
     #[inline(always)]
     fn default() -> Self {
@@ -265,14 +265,6 @@ impl From<&Vec4f> for [f32; 4] {
     }
 }
 
-impl From<f32> for Vec4f {
-    /// Does same as [`broadcast`](Self::broadcast).
-    #[inline(always)]
-    fn from(value: f32) -> Self {
-        Self::broadcast(value)
-    }
-}
-
 impl PartialEq for Vec4f {
     /// Checks whether all elements of vectors are equal.
     ///
@@ -317,7 +309,7 @@ mod tests {
     #[test]
     #[inline(never)] // in order to find the function in disassembled binary
     fn it_works() {
-        let a: Vec4f = 1.0.into();
+        let a = Vec4f::broadcast(1.0);
         assert_eq!(<[f32; 4]>::from(a), [1.0; 4]);
         assert_eq!(a, [1.0; 4].into());
 

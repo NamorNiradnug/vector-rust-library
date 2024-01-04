@@ -13,7 +13,7 @@ macro_rules! vec_overload_operator {
             type Output = Self;
             #[inline(always)]
             fn $op_name(self, rhs: <$vectype as SIMDVector>::Element) -> Self::Output {
-                self.$op_name(Into::<Self>::into(rhs))
+                self.$op_name(<$vectype>::broadcast(rhs))
             }
         }
 

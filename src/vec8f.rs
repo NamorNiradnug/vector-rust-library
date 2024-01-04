@@ -123,7 +123,7 @@ impl Vec8f {
     ///
     /// let array = AlignedArray([42.0; 8]);
     /// let vec = unsafe { Vec8f::load_aligned(&array.0) };
-    /// assert_eq!(vec, 42.0.into());
+    /// assert_eq!(vec, Vec8f::broadcast(42.0));
     /// ```
     /// In the following example `zeros` is aligned as `u16`, i.e. 2-bytes aligned.
     /// Therefore `zeros.as_ptr().byte_add(1)` is an odd address and hence not divisible by `32`.
@@ -360,7 +360,7 @@ impl Default for Vec8f {
     /// # Example
     /// ```
     /// # use vrl::Vec8f;
-    /// assert_eq!(Vec8f::default(), 0.0.into());
+    /// assert_eq!(Vec8f::default(), Vec8f::broadcast(0.0));
     /// ```
     #[inline(always)]
     fn default() -> Self {
@@ -450,14 +450,6 @@ impl From<&Vec8f> for [f32; 8] {
     }
 }
 
-impl From<f32> for Vec8f {
-    /// Does same as [`broadcast`](Self::broadcast).
-    #[inline(always)]
-    fn from(value: f32) -> Self {
-        Self::broadcast(value)
-    }
-}
-
 impl From<(Vec4f, Vec4f)> for Vec8f {
     /// Does same as [`join`](Self::join).
     #[inline(always)]
@@ -525,7 +517,7 @@ mod tests {
     #[test]
     #[inline(never)] // in order to find the function in disassembled binary
     fn it_works() {
-        let a: Vec8f = 1.0.into();
+        let a = Vec8f::broadcast(1.0);
         assert_eq!(<[f32; 8]>::from(a), [1.0; 8]);
         assert_eq!(a, [1.0; 8].into());
 
@@ -560,8 +552,8 @@ mod tests {
     #[cfg(avx)]
     #[test]
     fn test_m256_conv() {
-        use crate::intrinsics::__m256;
-        let vec = Vec8f::join(1.0.into(), 2.0.into());
+        use crate::{intrinsics::__m256, Vec4f};
+        let vec = Vec8f::join(Vec4f::broadcast(1.0), Vec4f::broadcast(2.0));
         assert_eq!(vec, __m256::from(vec).into());
     }
 }
