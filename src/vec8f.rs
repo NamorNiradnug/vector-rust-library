@@ -519,7 +519,6 @@ mod tests {
     #[test]
     #[inline(never)] // in order to find the function in disassembled binary
     fn it_works() {
-        println!("Is AVX enabled? {}", cfg!(avx));
         let a: Vec8f = 1.0.into();
         assert_eq!(<[f32; 8]>::from(a), [1.0; 8]);
         assert_eq!(a, [1.0; 8].into());
@@ -550,5 +549,13 @@ mod tests {
             Vec8f::load_partial(VALUES),
             Vec8f::from(&VALUES[..8].try_into().unwrap())
         );
+    }
+
+    #[cfg(avx)]
+    #[test]
+    fn test_m256_conv() {
+        use crate::intrinsics::__m256;
+        let vec = Vec8f::join(1.0.into(), 2.0.into());
+        assert_eq!(vec, __m256::from(vec).into());
     }
 }
