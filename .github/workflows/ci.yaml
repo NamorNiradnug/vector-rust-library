@@ -17,6 +17,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
 
   check_32bits:
     name: Check (32 bits; no AVX)
@@ -50,6 +52,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
 
   test_32bits:
     name: Test Suite (32 bits; no AVX)
@@ -85,6 +89,8 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
 
   clippy:
     name: Clippy
@@ -101,3 +107,5 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
