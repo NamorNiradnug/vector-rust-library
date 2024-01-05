@@ -367,6 +367,7 @@ impl Vec8f {
     /// let mut data = [-1.0; 9];
     /// Vec8f::default().store_checked(&mut data);
     /// ```
+    #[inline]
     pub fn store_checked(&self, slice: &mut [f32]) {
         self.store(
             slice

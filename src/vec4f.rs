@@ -253,6 +253,7 @@ impl Vec4f {
     /// let mut data = [-1.0; 5];
     /// Vec4f::default().store_checked(&mut data);
     /// ```
+    #[inline]
     pub fn store_checked(&self, slice: &mut [f32]) {
         self.store(
             slice
@@ -285,6 +286,7 @@ impl Vec4f {
         }
         unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 4]) };
     }
+
     /// Stores `min(4, slice.len())` elements of vector into prefix of `slice`.
     ///
     /// # Exmaples
@@ -300,6 +302,7 @@ impl Vec4f {
     /// Vec4f::broadcast(1.0).store_partial(&mut data);
     /// assert_eq!(data, [1.0, 1.0, 1.0, 1.0, 0.0]);  // note last zero
     /// ```
+    #[inline]
     pub fn store_partial(&self, slice: &mut [f32]) {
         match slice.len() {
             4.. => unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) },
