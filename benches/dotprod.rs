@@ -73,19 +73,28 @@ fn dotprod_bench(c: &mut Criterion) {
     ] {
         let vec1 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let vec2 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
+        let input = (vec1.as_slice(), vec2.as_slice());
+
         group.throughput(Throughput::Elements(vec_len as u64));
-        group.bench_function(BenchmarkId::new("no SIMD", vec_len), |b| {
-            b.iter(|| dotprod_simple(vec1.as_slice(), vec2.as_slice()))
-        });
-        group.bench_function(BenchmarkId::new("using chunks iterator", vec_len), |b| {
-            b.iter(|| dotprod_vec8f_chunks(vec1.as_slice(), vec2.as_slice()))
-        });
-        group.bench_function(BenchmarkId::new("handwritten loop", vec_len), |b| {
-            b.iter(|| dotprod_vec8f_loop(vec1.as_slice(), vec2.as_slice()))
-        });
-        group.bench_function(
+        group.bench_with_input(
+            BenchmarkId::new("no SIMD", vec_len),
+            &input,
+            |b, (vec1, vec2)| b.iter(|| dotprod_simple(vec1, vec2)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("using chunks iterator", vec_len),
+            &input,
+            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_chunks(vec1, vec2)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("handwritten loop", vec_len),
+            &input,
+            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_loop(vec1, vec2)),
+        );
+        group.bench_with_input(
             BenchmarkId::new("handwritten loop with raw pointers", vec_len),
-            |b| b.iter(|| dotprod_vec8f_ptr(vec1.as_slice(), vec2.as_slice())),
+            &input,
+            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_ptr(vec1, vec2)),
         );
     }
     group.finish();
