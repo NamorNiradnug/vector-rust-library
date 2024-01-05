@@ -4,7 +4,11 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::{common::SIMDVector, macros::vec_overload_operator, Vec4f};
+use crate::{
+    common::SIMDVector,
+    macros::{vec_impl_sum_prod, vec_overload_operator},
+    Vec4f,
+};
 
 #[cfg(avx)]
 use crate::intrinsics::*;
@@ -557,6 +561,7 @@ vec_overload_operator!(Vec8f, Add, add, _mm256_add_ps, avx);
 vec_overload_operator!(Vec8f, Sub, sub, _mm256_sub_ps, avx);
 vec_overload_operator!(Vec8f, Mul, mul, _mm256_mul_ps, avx);
 vec_overload_operator!(Vec8f, Div, div, _mm256_div_ps, avx);
+vec_impl_sum_prod!(Vec8f);
 
 #[cfg(avx)]
 impl From<__m256> for Vec8f {

@@ -39,4 +39,21 @@ macro_rules! vec_overload_operator {
     };
 }
 
+macro_rules! vec_impl_sum_prod {
+    ($vectype: ty) => {
+        impl std::iter::Sum for $vectype {
+            fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+                iter.fold(<$vectype>::default(), |a, b| a + b)
+            }
+        }
+
+        impl std::iter::Product for $vectype {
+            fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+                iter.fold(<$vectype>::default(), |a, b| a * b)
+            }
+        }
+    };
+}
+
+pub(crate) use vec_impl_sum_prod;
 pub(crate) use vec_overload_operator;

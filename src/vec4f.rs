@@ -4,7 +4,11 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::{common::SIMDVector, intrinsics::*, macros::vec_overload_operator};
+use crate::{
+    common::SIMDVector,
+    intrinsics::*,
+    macros::{vec_impl_sum_prod, vec_overload_operator},
+};
 
 /// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
 #[derive(Clone, Copy)]
@@ -367,6 +371,7 @@ vec_overload_operator!(Vec4f, Add, add, _mm_add_ps, sse);
 vec_overload_operator!(Vec4f, Sub, sub, _mm_sub_ps, sse);
 vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps, sse);
 vec_overload_operator!(Vec4f, Div, div, _mm_div_ps, sse);
+vec_impl_sum_prod!(Vec4f);
 
 impl From<__m128> for Vec4f {
     /// Wraps given `value` into [`Vec4f`].
