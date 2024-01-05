@@ -1,6 +1,6 @@
-use std::{iter::zip, ops::Range};
+use std::{iter::zip, ops::Range, time::Duration};
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 
 use vrl::{SIMDVector, Vec8f};
@@ -55,6 +55,8 @@ fn generate_rand_vector(len: usize, range: Range<f32>, rand_gen: &mut SmallRng) 
 fn dotprod_bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("dotprod");
     let mut rand_gen = SmallRng::seed_from_u64(57);
+    group.warm_up_time(Duration::from_millis(500));
+    group.measurement_time(Duration::from_secs(3));
     for vec_len in [
         1,
         3,
@@ -71,6 +73,7 @@ fn dotprod_bench(c: &mut Criterion) {
     ] {
         let vec1 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let vec2 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
+        group.throughput(Throughput::Elements(vec_len as u64));
         group.bench_function(BenchmarkId::new("no SIMD", vec_len), |b| {
             b.iter(|| dotprod_simple(vec1.as_slice(), vec2.as_slice()))
         });
