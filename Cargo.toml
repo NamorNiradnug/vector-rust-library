@@ -3,6 +3,10 @@ authors = ["NamorNiradnug"]
 name = "vector-rust-library"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/NamorNiradnug/vector-rust-library"
+license = "MIT"
+keywords = ["simd", "vector-class-library"]
+description = "Rust port of Vector Class Library"
 
 [lib]
 name = "vrl"
