@@ -280,6 +280,7 @@ impl Vec4f {
     /// Vec4f::default().store_prefix(&mut data);
     /// ```
     #[inline(always)]
+
     pub fn store_prefix(&self, slice: &mut [f32]) {
         if slice.len() < 4 {
             panic!("slice.len() must at least 4");
