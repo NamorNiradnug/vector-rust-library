@@ -19,7 +19,7 @@ use derive_more::{Add, Div, Mul, Sub};
 #[derive(Clone, Copy)]
 #[cfg_attr(no_avx, derive(Add, Sub, Mul, Div), mul(forward), div(forward))]
 #[cfg_attr(avx, repr(transparent))]
-#[cfg_attr(no_avx, repr(C))]  // [repr(C)] guarantees fields ordering and alignlessness.
+#[cfg_attr(no_avx, repr(C))] // [repr(C)] guarantees fields ordering and paddinglessness.
 pub struct Vec8f {
     #[cfg(avx)]
     ymm: __m256,
