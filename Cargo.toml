@@ -10,3 +10,11 @@ name = "vrl"
 [dependencies]
 paste = "1.0.14"
 derive_more = "0.99.17"
+
+[dev-dependencies]
+criterion = "0.3"
+rand = { version = "0.8.5", features = ["small_rng"] }
+
+[[bench]]
+name = "dotprod"
+harness = false
