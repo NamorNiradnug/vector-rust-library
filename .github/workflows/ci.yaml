@@ -12,7 +12,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - uses: actions-rs/cargo@v1
         with:
@@ -47,7 +47,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - uses: actions-rs/cargo@v1
         with:
@@ -74,41 +74,6 @@ jobs:
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
 
-  bench:
-    name: Benchmarks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-        env:
-          RUSTFLAGS: -C target-feature=+avx,+avx2
-
-  bench_32bits:
-    name: Benchmarks (32 bits; no AVX)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          target: i686-unknown-linux-gnu
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: bench
-          args: --target i686-unknown-linux-gnu
-        env:
-          RUSTFLAGS: -C target-feature=-avx,-avx2
-
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
@@ -117,7 +82,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
@@ -135,7 +100,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
