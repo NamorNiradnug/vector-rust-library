@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    i32,
     mem::MaybeUninit,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
@@ -333,6 +334,83 @@ impl Vec4f {
             let t3 = _mm_shuffle_ps(t2, t2, 1);
             let t4 = _mm_add_ss(t2, t3);
             _mm_cvtss_f32(t4)
+        }
+    }
+
+    /// Extracts `index`-th element of the vector. Index `0` corresponds to the "most left"
+    /// element.
+    ///
+    /// # Panic
+    /// Panics if `index` is invalid, i.e. greater than 3.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let vec = Vec4f::new(1.0, 2.0, 3.0, 4.0);
+    /// assert_eq!(vec.extract(2), 3.0);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec4f;
+    /// Vec4f::default().extract(5);
+    ///
+    /// ```
+    ///
+    /// # Note
+    /// If `index` is known at compile time consider using [`extract_const`](Self::extract_const).
+    #[inline]
+    pub fn extract(self, index: usize) -> f32 {
+        // NOTE: Agner Fog uses `int` as `index` type. Should we make it `isize` or `i32` too?
+        // NOTE: Agner Fog's implementation uses `index & 3` and works with any `index` value.
+        // Should we also implement such behavior instead of panicing?
+        // If so, a panicing version should be named `extract_checked` and Fog's version should be
+        // called `extract`.
+
+        if index >= Self::ELEMENTS {
+            panic!("invalid index");
+        }
+
+        // NOTE: Agner Fog doesn't use aligned store here.
+        // TODO: benchmark if this vertion actually faster then alignless one.
+        #[repr(C)]
+        #[repr(align(16))]
+        struct AlignedArray([f32; 4]);
+
+        let mut stored = std::mem::MaybeUninit::<AlignedArray>::uninit();
+        unsafe {
+            self.store_ptr_aligned(stored.as_mut_ptr() as *mut [f32; 4]);
+            stored.assume_init().0[index]
+        }
+    }
+
+    /// Extracts `INDEX`-th element of the vector. Does same as [`extract`](Self::extract) with compile-time known
+    /// index, but works faster on platforms with `sse4.1` support.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let vec = Vec4f::new(1.0, 2.0, 3.0, 4.0);
+    /// assert_eq!(vec.extract_const::<2>(), 3.0);
+    /// ```
+    /// ```compile_fail
+    /// # use vrl::Vec4f;
+    /// Vec4f::default().extract_const::<5>();
+    ///
+    /// ```
+    #[inline(always)]
+    #[allow(private_bounds)]
+    // TODO: replace this guard with const { assert!(...) } (if its possible)
+    #[cfg_attr(no_sse41, const_guards::guard(INDEX >= 0 && INDEX < 4))]
+    pub fn extract_const<const INDEX: i32>(self) -> f32 {
+        // Screw Rust for its unability to do anything usefull with const generics
+        #[cfg(sse41)]
+        {
+            // TODO: benchmark this code to make sure it's actually faster than fallback version
+            f32::from_bits(unsafe { _mm_extract_ps(self.into(), INDEX) } as u32)
+        }
+
+        #[cfg(no_sse41)]
+        {
+            self.extract(INDEX as usize)
         }
     }
 }

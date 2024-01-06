@@ -505,6 +505,80 @@ impl Vec8f {
     pub fn split(self) -> (Vec4f, Vec4f) {
         (self.low(), self.high())
     }
+
+    /// Extracts `index`-th element of the vector. Index `0` corresponds to the "most left"
+    /// element.
+    ///
+    /// # Panic
+    /// Panics if `index` is invalid, i.e. greater than 7.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// assert_eq!(vec.extract(5), 6.0);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// Vec8f::default().extract(9);
+    ///
+    /// ```
+    ///
+    /// # Note
+    /// If `index` is known at compile time consider using [`extract_const`](Self::extract_const).
+    #[inline]
+    pub fn extract(self, index: usize) -> f32 {
+        // NOTE: see notes for Vec4f::extract
+
+        if index >= Self::ELEMENTS {
+            panic!("invalid index");
+        }
+
+        #[repr(C)]
+        #[repr(align(32))]
+        struct AlignedArray([f32; 8]);
+
+        let mut stored = std::mem::MaybeUninit::<AlignedArray>::uninit();
+        unsafe {
+            self.store_ptr_aligned(stored.as_mut_ptr() as *mut [f32; 8]);
+            stored.assume_init().0[index]
+        }
+    }
+
+    /// Extracts `INDEX`-th element of the vector. Does same as [`extract`](Self::extract) with compile-time known
+    /// index.
+    ///
+    /// # Examples
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// assert_eq!(vec.extract_const::<5>(), 6.0);
+    /// ```
+    /// ```compile_fail
+    /// # use vrl::Vec8f;
+    /// Vec8f::default().extract_const::<9>();
+    ///
+    /// ```
+    #[inline(always)]
+    #[allow(private_bounds)]
+    // TODO: replace this guard with const { assert!(...) } (if its possible)
+    #[const_guards::guard(INDEX >= 0 && INDEX < 8)]
+    pub fn extract_const<const INDEX: i32>(self) -> f32 {
+        // TODO: optimize
+        /*
+        #[cfg(sse41)]
+        {
+            if INDEX < 4 {
+                self.low().extract_const::<INDEX>()
+            } else {
+                self.high().extract_const::<{ INDEX - 4 }>()
+                                            ^^^^^^^^^^^^^ won't compile
+            }
+        }
+        */
+
+        self.extract(INDEX as usize)
+    }
 }
 
 impl SIMDVector for Vec8f {
