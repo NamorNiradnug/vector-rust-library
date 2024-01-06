@@ -96,7 +96,7 @@ impl Vec4f {
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
-    /// Checks that data contains exactly four elements and loads them into vector.
+    /// Checks that `data` contains exactly four elements and loads them into vector.
     ///
     /// # Panics
     /// Panics if `data.len()` isn't `4`.
@@ -235,7 +235,7 @@ impl Vec4f {
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
-    /// Checkes that `slice` contains exactly four elements and store elements of vector there.
+    /// Checks that `slice` contains exactly four elements and stores elements of vector there.
     ///
     /// # Panics
     /// Panics if `slice.len()` isn't `4`.
@@ -323,7 +323,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub fn sum(self) -> f32 {
-        // Acoording to Agner Fog, using `hadd` is inefficient.
+        // According to Agner Fog, using `hadd` is inefficient.
         // src: https://github.com/vectorclass/version2/blob/master/vectorf128.h#L1043
         // TODO: benchmark this implementation and `hadd`-based one
         unsafe {

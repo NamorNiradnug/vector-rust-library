@@ -167,7 +167,7 @@ impl Vec8f {
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
-    /// Checks that data contains exactly eight elements and loads them into vector.
+    /// Checks that `data` contains exactly eight elements and loads them into vector.
     ///
     /// # Panics
     /// Panics if `data.len()` isn't `8`.
@@ -196,7 +196,7 @@ impl Vec8f {
         )
     }
 
-    /// Loads the first eight element of `data` into vector.
+    /// Loads the first eight elements of `data` into vector.
     ///
     /// # Panics
     /// Panics if `data` contains less than eight elements.
@@ -343,7 +343,7 @@ impl Vec8f {
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
-    /// Checkes that `slice` contains exactly eight elements and store elements of vector there.
+    /// Checks that `slice` contains exactly eight elements and stores elements of vector there.
     ///
     /// # Panics
     /// Panics if `slice.len()` isn't `8`.
