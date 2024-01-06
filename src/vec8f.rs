@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign, Index},
 };
 
 use crate::{
@@ -733,6 +733,47 @@ impl Debug for Vec8f {
     }
 }
 
+impl Index<usize> for &Vec8f {
+    type Output = f32;
+
+    /// Extracts `index`-th element of the vector.  If value of the vector is expected to be
+    /// in a register consider using [`extract`](`Vec4f::extract`). Use this function if
+    /// only the vector is probably stored in memory.
+    ///
+    /// # Panics
+    /// Panics if `index` is invalid, i.e. greater than `7`.
+    ///
+    /// # Examples
+    /// In the following example the vector is stored in the heap. Using `[]`-indexing in
+    /// the case is as efficient as dereferencing the corresponding pointer.
+    /// ```
+    /// # use vrl::Vec8f;
+    /// # use std::ops::Index;
+    /// let many_vectors = vec![Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0); 128];
+    /// assert_eq!(many_vectors.index(64)[5], 6.0);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec8f;
+    /// (&Vec8f::default())[8];
+    /// ```
+    /// Here is an example if inefficient usage of the function. The vector wouldn't even reach memory
+    /// and would stay in a register without that `[4]`. [`extract`](Vec8f::extract) should be used instead.
+    /// ```
+    /// # use vrl::Vec8f;
+    /// let mut vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
+    /// vec *= 3.0;
+    /// vec -= 2.0;
+    /// let second_value = (&vec)[4];
+    /// assert_eq!(second_value, 13.0);
+    /// ```
+    #[inline(always)]
+    fn index(&self, index: usize) -> &Self::Output {
+        if index >= Vec8f::ELEMENTS {
+            panic!("invalid index");
+        }
+        unsafe { &*(*self as *const Vec8f as *const f32).add(index) }
+    }
+}
 #[cfg(test)]
 mod tests {
     use crate::Vec8f;

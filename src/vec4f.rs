@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use crate::{
@@ -525,6 +525,48 @@ impl Debug for Vec4f {
             debug_tuple.field(&value);
         }
         debug_tuple.finish()
+    }
+}
+
+impl Index<usize> for &Vec4f {
+    type Output = f32;
+
+    /// Extracts `index`-th element of the vector.  If value of the vector is expected to be
+    /// in a register consider using [`extract`](`Vec4f::extract`). Use this function if
+    /// only the vector is probably stored in memory.
+    ///
+    /// # Panics
+    /// Panics if `index` is invalid, i.e. greater than `3`.
+    ///
+    /// # Examples
+    /// In the following example the vector is stored in the heap. Using `[]`-indexing in
+    /// the case is as efficient as dereferencing the corresponding pointer.
+    /// ```
+    /// # use vrl::Vec4f;
+    /// # use std::ops::Index;
+    /// let many_vectors = vec![Vec4f::new(1.0, 2.0, 3.0, 4.0); 128];
+    /// assert_eq!(many_vectors.index(64)[2], 3.0);
+    /// ```
+    /// ```should_panic
+    /// # use vrl::Vec4f;
+    /// (&Vec4f::default())[4];
+    /// ```
+    /// Here is an example if inefficient usage of the function. The vector wouldn't even reach memory
+    /// and would stay in a register without that `[1]`. [`extract`](Vec4f::extract) should be used instead.
+    /// ```
+    /// # use vrl::Vec4f;
+    /// let mut vec = Vec4f::new(1.0, 2.0, 3.0, 4.0);
+    /// vec *= 3.0;
+    /// vec -= 2.0;
+    /// let second_value = (&vec)[1];
+    /// assert_eq!(second_value, 4.0);
+    /// ```
+    #[inline(always)]
+    fn index(&self, index: usize) -> &Self::Output {
+        if index >= Vec4f::ELEMENTS {
+            panic!("invalid index");
+        }
+        unsafe { &*(*self as *const Vec4f as *const f32).add(index) }
     }
 }
 
