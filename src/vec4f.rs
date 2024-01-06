@@ -262,7 +262,7 @@ impl Vec4f {
         self.store(
             slice
                 .try_into()
-                .expect("slice must contain at least 4 elements"),
+                .expect("slice must contain exactly 4 elements"),
         )
     }
 
@@ -284,10 +284,9 @@ impl Vec4f {
     /// Vec4f::default().store_prefix(&mut data);
     /// ```
     #[inline(always)]
-
     pub fn store_prefix(&self, slice: &mut [f32]) {
         if slice.len() < 4 {
-            panic!("slice.len() must at least 4");
+            panic!("slice must contain at least 4 elements");
         }
         unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 4]) };
     }

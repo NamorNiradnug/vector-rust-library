@@ -375,7 +375,7 @@ impl Vec8f {
         self.store(
             slice
                 .try_into()
-                .expect("slice must contain at least 8 elements"),
+                .expect("slice must contain extactly 8 elements"),
         )
     }
 
@@ -399,7 +399,7 @@ impl Vec8f {
     #[inline(always)]
     pub fn store_prefix(&self, slice: &mut [f32]) {
         if slice.len() < 8 {
-            panic!("slice.len() must at least 8");
+            panic!("slice must contain at least 8");
         }
         unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 8]) };
     }
