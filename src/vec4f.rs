@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign, IndexMut},
 };
 
 use crate::{
@@ -393,7 +393,6 @@ impl Vec4f {
     /// # use vrl::Vec4f;
     /// Vec4f::default().extract_const::<5>();
     /// # #[cfg(miri)] { compile_error!() }
-    ///
     /// ```
     #[inline(always)]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
@@ -528,7 +527,7 @@ impl Debug for Vec4f {
     }
 }
 
-impl Index<usize> for &Vec4f {
+impl Index<usize> for Vec4f {
     type Output = f32;
 
     /// Extracts `index`-th element of the vector.  If value of the vector is expected to be
@@ -549,7 +548,7 @@ impl Index<usize> for &Vec4f {
     /// ```
     /// ```should_panic
     /// # use vrl::Vec4f;
-    /// (&Vec4f::default())[4];
+    /// Vec4f::default()[4];
     /// ```
     /// Here is an example if inefficient usage of the function. The vector wouldn't even reach memory
     /// and would stay in a register without that `[1]`. [`extract`](Vec4f::extract) should be used instead.
@@ -558,15 +557,25 @@ impl Index<usize> for &Vec4f {
     /// let mut vec = Vec4f::new(1.0, 2.0, 3.0, 4.0);
     /// vec *= 3.0;
     /// vec -= 2.0;
-    /// let second_value = (&vec)[1];
+    /// let second_value = vec[1];
     /// assert_eq!(second_value, 4.0);
     /// ```
     #[inline(always)]
     fn index(&self, index: usize) -> &Self::Output {
-        if index >= Vec4f::ELEMENTS {
+        if index >= Self::ELEMENTS {
             panic!("invalid index");
         }
-        unsafe { &*(*self as *const Vec4f as *const f32).add(index) }
+        unsafe { &*(self as *const Self as *const f32).add(index) }
+    }
+}
+
+impl IndexMut<usize> for Vec4f {
+    #[inline(always)]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index >= Self::ELEMENTS {
+            panic!("invalid index");
+        }
+        unsafe { &mut *(self as *mut Self as *mut f32).add(index) }
     }
 }
 

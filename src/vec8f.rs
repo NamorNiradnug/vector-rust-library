@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign, IndexMut},
 };
 
 use crate::{
@@ -733,7 +733,7 @@ impl Debug for Vec8f {
     }
 }
 
-impl Index<usize> for &Vec8f {
+impl Index<usize> for Vec8f {
     type Output = f32;
 
     /// Extracts `index`-th element of the vector.  If value of the vector is expected to be
@@ -754,7 +754,7 @@ impl Index<usize> for &Vec8f {
     /// ```
     /// ```should_panic
     /// # use vrl::Vec8f;
-    /// (&Vec8f::default())[8];
+    /// Vec8f::default()[8];
     /// ```
     /// Here is an example if inefficient usage of the function. The vector wouldn't even reach memory
     /// and would stay in a register without that `[4]`. [`extract`](Vec8f::extract) should be used instead.
@@ -763,7 +763,7 @@ impl Index<usize> for &Vec8f {
     /// let mut vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
     /// vec *= 3.0;
     /// vec -= 2.0;
-    /// let second_value = (&vec)[4];
+    /// let second_value = vec[4];
     /// assert_eq!(second_value, 13.0);
     /// ```
     #[inline(always)]
@@ -771,9 +771,21 @@ impl Index<usize> for &Vec8f {
         if index >= Vec8f::ELEMENTS {
             panic!("invalid index");
         }
-        unsafe { &*(*self as *const Vec8f as *const f32).add(index) }
+        unsafe { &*(self as *const Vec8f as *const f32).add(index) }
     }
 }
+
+impl IndexMut<usize> for Vec8f {
+    #[inline(always)]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index >= Self::ELEMENTS {
+            panic!("invalid index");
+        }
+        unsafe { &mut *(self as *mut Self as *mut f32).add(index) }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use crate::Vec8f;
