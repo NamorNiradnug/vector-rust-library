@@ -401,7 +401,7 @@ impl Vec8f {
         if slice.len() < 8 {
             panic!("slice must contain at least 8");
         }
-        unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 8]) };
+        unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 8]) };
     }
 
     /// Stores `min(8, slice.len())` elements of vector into prefix of `slice`.

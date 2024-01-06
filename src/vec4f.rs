@@ -288,7 +288,7 @@ impl Vec4f {
         if slice.len() < 4 {
             panic!("slice must contain at least 4 elements");
         }
-        unsafe { self.store_ptr(slice.as_ptr() as *mut [f32; 4]) };
+        unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) };
     }
 
     /// Stores `min(4, slice.len())` elements of vector into prefix of `slice`.
