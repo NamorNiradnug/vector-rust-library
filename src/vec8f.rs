@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign, IndexMut},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use crate::{
@@ -784,7 +784,6 @@ impl IndexMut<usize> for Vec8f {
         unsafe { &mut *(self as *mut Self as *mut f32).add(index) }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

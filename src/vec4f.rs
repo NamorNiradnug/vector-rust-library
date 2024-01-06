@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign, IndexMut},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 use crate::{
