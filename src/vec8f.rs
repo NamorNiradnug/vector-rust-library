@@ -62,7 +62,7 @@ impl Vec8f {
     ///
     /// See also [`split`](Self::split).
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let a = Vec4f::new(1.0, 2.0, 3.0, 4.0);
@@ -154,7 +154,7 @@ impl Vec8f {
 
     /// Loads values of returned vector from given data.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::Vec8f;
     /// assert_eq!(
@@ -225,7 +225,7 @@ impl Vec8f {
     /// Loads first 8 elements of `data` if available otherwise initializes first elements of
     /// returned vector with values of `data` and rest elements with zeros.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::Vec8f;
     /// let values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
@@ -428,7 +428,7 @@ impl Vec8f {
 
     /// Calculates the sum of all elements of vector.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::Vec8f;
     /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
@@ -441,7 +441,7 @@ impl Vec8f {
 
     /// Returns the first four elements of vector.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
@@ -462,7 +462,7 @@ impl Vec8f {
 
     /// Returns the last four elements of vector.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::{Vec4f, Vec8f};
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);

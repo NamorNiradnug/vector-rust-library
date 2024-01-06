@@ -83,7 +83,7 @@ impl Vec4f {
 
     /// Loads values of returned vector from given data.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::Vec4f;
     /// assert_eq!(
@@ -316,7 +316,7 @@ impl Vec4f {
 
     /// Calculates the sum of all elements of vector.
     ///
-    /// # Exmaple
+    /// # Exmaples
     /// ```
     /// # use vrl::Vec4f;
     /// assert_eq!(Vec4f::new(1.0, 2.0, 3.0, 4.0).sum(), 10.0);
