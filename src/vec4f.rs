@@ -392,6 +392,7 @@ impl Vec4f {
     /// ```compile_fail
     /// # use vrl::Vec4f;
     /// Vec4f::default().extract_const::<5>();
+    /// # #[cfg(miri)] { compile_error!() }
     ///
     /// ```
     #[inline(always)]

@@ -55,8 +55,8 @@ jobs:
         env:
           RUSTFLAGS: -C target-feature=+avx,+avx2
 
-  test_32bits:
-    name: Test Suite (32 bits; no AVX, no SSE4)
+  test_miri:
+    name: Test Suite (Miri; no AVX, no SSE4)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -65,14 +65,13 @@ jobs:
           profile: minimal
           toolchain: nightly
           override: true
-          target: i686-unknown-linux-gnu
+          components: miri
       - uses: actions-rs/cargo@v1
         with:
-          use-cross: true
-          command: test
-          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
+          command: test miri
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
+          MIRIFLAGS: -Zmiri-symbolic-alignment-check
 
   fmt:
     name: Rustfmt

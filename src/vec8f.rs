@@ -550,7 +550,7 @@ impl Vec8f {
     /// ```compile_fail
     /// # use vrl::Vec8f;
     /// Vec8f::default().extract_const::<9>();
-    ///
+    /// # #[cfg(miri)] { compile_error!() }
     /// ```
     #[inline(always)]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
