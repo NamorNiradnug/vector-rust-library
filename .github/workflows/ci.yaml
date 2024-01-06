@@ -68,7 +68,8 @@ jobs:
           components: miri
       - uses: actions-rs/cargo@v1
         with:
-          command: test miri
+          command: miri
+          args: test
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
           MIRIFLAGS: -Zmiri-symbolic-alignment-check
