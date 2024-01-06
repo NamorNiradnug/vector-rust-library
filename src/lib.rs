@@ -4,9 +4,6 @@
 //! This is a library for using the SIMD (Single Instruction Multiple Data) instructions on modern
 //! x86 and x86-64 CPUs.
 
-#![allow(incomplete_features, internal_features)]
-#![feature(generic_const_exprs, inline_const, allow_internal_unstable)]
-
 mod common;
 mod macros;
 

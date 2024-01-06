@@ -396,19 +396,11 @@ impl Vec4f {
     ///
     /// ```
     #[inline(always)]
-    #[allow(private_bounds)]
-    // TODO: replace this guard with const { assert!(...) } (if its possible)
-    #[cfg_attr(no_sse41, const_guards::guard(INDEX >= 0 && INDEX < 4))]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
-        // Screw Rust for its unability to do anything usefull with const generics
-        #[cfg(sse41)]
-        {
+        if cfg!(sse41) {
             // TODO: benchmark this code to make sure it's actually faster than fallback version
             f32::from_bits(unsafe { _mm_extract_ps(self.into(), INDEX) } as u32)
-        }
-
-        #[cfg(no_sse41)]
-        {
+        } else {
             self.extract(INDEX as usize)
         }
     }

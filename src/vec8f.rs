@@ -6,12 +6,10 @@ use std::{
 
 use crate::{
     common::SIMDVector,
+    intrinsics::*,
     macros::{vec_impl_sum_prod, vec_overload_operator},
     Vec4f,
 };
-
-#[cfg(avx)]
-use crate::intrinsics::*;
 
 #[cfg(no_avx)]
 use derive_more::{Add, Div, Mul, Sub};
@@ -560,23 +558,15 @@ impl Vec8f {
     ///
     /// ```
     #[inline(always)]
-    #[allow(private_bounds)]
-    // TODO: replace this guard with const { assert!(...) } (if its possible)
-    #[const_guards::guard(INDEX >= 0 && INDEX < 8)]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
         // TODO: optimize
-        /*
-        #[cfg(sse41)]
-        {
-            if INDEX < 4 {
-                self.low().extract_const::<INDEX>()
-            } else {
-                self.high().extract_const::<{ INDEX - 4 }>()
-                                            ^^^^^^^^^^^^^ won't compile
+
+        if false {
+            unsafe {
+                // this `extract` intrinsic ensures that `INDEX` is in range 0..8
+                _mm256_extract_epi32(_mm256_setzero_si256(), INDEX);
             }
         }
-        */
-
         self.extract(INDEX as usize)
     }
 }
