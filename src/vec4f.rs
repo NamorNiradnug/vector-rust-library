@@ -44,11 +44,11 @@ impl Vec4f {
     /// ```
     /// # use vrl::Vec4f;
     /// let array = [42.0; 4];
-    /// let vec = unsafe { Vec4f::load_ptr(&array) };
+    /// let vec = unsafe { Vec4f::load_ptr(array.as_ptr()) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load_ptr(addr: *const [f32; 4]) -> Self {
-        _mm_loadu_ps(addr as *const f32).into()
+    pub unsafe fn load_ptr(addr: *const f32) -> Self {
+        _mm_loadu_ps(addr).into()
     }
 
     /// Loads vector from aligned array pointed by `addr`.
@@ -66,7 +66,7 @@ impl Vec4f {
     /// struct AlignedArray([f32; 4]);
     ///
     /// let array = AlignedArray([42.0; 4]);
-    /// let vec = unsafe { Vec4f::load_ptr_aligned(&array.0) };
+    /// let vec = unsafe { Vec4f::load_ptr_aligned(array.0.as_ptr()) };
     /// assert_eq!(vec, Vec4f::broadcast(42.0));
     /// ```
     /// In the following example `zeros` is aligned 2-bytes aligned. Therefore
@@ -74,11 +74,11 @@ impl Vec4f {
     /// ```should_panic
     /// # use vrl::Vec4f;
     /// let zeros = unsafe { std::mem::zeroed::<[u16; 10]>() };
-    /// unsafe { Vec4f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 4]) };
+    /// unsafe { Vec4f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const f32) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load_ptr_aligned(addr: *const [f32; 4]) -> Self {
-        _mm_load_ps(addr as *const f32).into()
+    pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
+        _mm_load_ps(addr).into()
     }
 
     /// Loads values of returned vector from given data.
@@ -93,7 +93,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub fn load(data: &[f32; 4]) -> Self {
-        unsafe { Self::load_ptr(data) }
+        unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
     /// Checks that data contains exactly four elements and loads them into vector.
@@ -148,7 +148,7 @@ impl Vec4f {
         if data.len() < 4 {
             panic!("data must contain at least 4 elements");
         }
-        unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 4]) }
+        unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
     /// Loads first 4 elements of `data` if available otherwise initializes first elements of
@@ -170,7 +170,7 @@ impl Vec4f {
     #[inline]
     pub fn load_partial(data: &[f32]) -> Self {
         match data.len() {
-            4.. => unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 4]) },
+            4.. => unsafe { Self::load_ptr(data.as_ptr()) },
             3 => Self::new(data[0], data[1], data[2], 0.0),
             2 => Self::new(data[0], data[1], 0.0, 0.0),
             1 => Self::new(data[0], 0.0, 0.0, 0.0),
@@ -199,8 +199,8 @@ impl Vec4f {
     /// # Safety
     /// `addr` must be a valid pointer.
     #[inline(always)]
-    pub unsafe fn store_ptr(&self, addr: *mut [f32; 4]) {
-        _mm_storeu_ps(addr as *mut f32, self.xmm)
+    pub unsafe fn store_ptr(&self, addr: *mut f32) {
+        _mm_storeu_ps(addr, self.xmm)
     }
 
     /// Stores vector into aligned array at given address.
@@ -211,8 +211,8 @@ impl Vec4f {
     ///
     /// [`store_ptr`]: Self::store_ptr
     #[inline(always)]
-    pub unsafe fn store_ptr_aligned(&self, addr: *mut [f32; 4]) {
-        _mm_store_ps(addr as *mut f32, self.xmm)
+    pub unsafe fn store_ptr_aligned(&self, addr: *mut f32) {
+        _mm_store_ps(addr, self.xmm)
     }
 
     /// Stores vector into aligned array at given address in uncached memory (non-temporal store).
@@ -225,14 +225,14 @@ impl Vec4f {
     ///
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
     #[inline(always)]
-    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut [f32; 4]) {
-        _mm_stream_ps(addr as *mut f32, self.xmm)
+    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut f32) {
+        _mm_stream_ps(addr, self.xmm)
     }
 
     /// Stores vector into given `array`.
     #[inline(always)]
     pub fn store(&self, array: &mut [f32; 4]) {
-        unsafe { self.store_ptr(array) }
+        unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
     /// Checkes that `slice` contains exactly four elements and store elements of vector there.
@@ -288,7 +288,7 @@ impl Vec4f {
         if slice.len() < 4 {
             panic!("slice must contain at least 4 elements");
         }
-        unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) };
+        unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
     /// Stores `min(4, slice.len())` elements of vector into prefix of `slice`.
@@ -309,7 +309,7 @@ impl Vec4f {
     #[inline]
     pub fn store_partial(&self, slice: &mut [f32]) {
         match slice.len() {
-            4.. => unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) },
+            4.. => unsafe { self.store_ptr(slice.as_mut_ptr()) },
             _ => slice.copy_from_slice(&<[f32; 4]>::from(self)[..slice.len()]),
         }
     }
@@ -375,7 +375,7 @@ impl Vec4f {
 
         let mut stored = std::mem::MaybeUninit::<AlignedArray>::uninit();
         unsafe {
-            self.store_ptr_aligned(stored.as_mut_ptr() as *mut [f32; 4]);
+            self.store_ptr_aligned(stored.as_mut_ptr() as *mut f32);
             stored.assume_init().0[index]
         }
     }
@@ -477,7 +477,7 @@ impl From<Vec4f> for [f32; 4] {
     fn from(value: Vec4f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
-            value.store_ptr(result.as_mut_ptr());
+            value.store_ptr(result.as_mut_ptr() as *mut f32);
             result.assume_init()
         }
     }

@@ -95,19 +95,18 @@ impl Vec8f {
     /// ```
     /// # use vrl::Vec8f;
     /// let array = [42.0; 8];
-    /// let vec = unsafe { Vec8f::load_ptr(&array) };
+    /// let vec = unsafe { Vec8f::load_ptr(array.as_ptr()) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load_ptr(addr: *const [f32; 8]) -> Self {
+    pub unsafe fn load_ptr(addr: *const f32) -> Self {
         #[cfg(avx)]
         {
-            _mm256_loadu_ps(addr as *const f32).into()
+            _mm256_loadu_ps(addr).into()
         }
 
         #[cfg(no_avx)]
         {
-            let addr = addr as *const [f32; 4];
-            (Vec4f::load_ptr(addr), Vec4f::load_ptr(addr.add(1))).into()
+            (Vec4f::load_ptr(addr), Vec4f::load_ptr(addr.add(4))).into()
         }
     }
 
@@ -126,7 +125,7 @@ impl Vec8f {
     /// struct AlignedArray([f32; 8]);
     ///
     /// let array = AlignedArray([42.0; 8]);
-    /// let vec = unsafe { Vec8f::load_ptr_aligned(&array.0) };
+    /// let vec = unsafe { Vec8f::load_ptr_aligned(array.0.as_ptr()) };
     /// assert_eq!(vec, Vec8f::broadcast(42.0));
     /// ```
     /// In the following example `zeros` is aligned as `u16`, i.e. 2-bytes aligned.
@@ -134,21 +133,20 @@ impl Vec8f {
     /// ```should_panic
     /// # use vrl::Vec8f;
     /// let zeros = unsafe { std::mem::zeroed::<[u16; 20]>() };
-    /// unsafe { Vec8f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const [f32; 8]) };
+    /// unsafe { Vec8f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const f32) };
     /// ```
     #[inline(always)]
-    pub unsafe fn load_ptr_aligned(addr: *const [f32; 8]) -> Self {
+    pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         #[cfg(avx)]
         {
-            _mm256_load_ps(addr as *const f32).into()
+            _mm256_load_ps(addr).into()
         }
 
         #[cfg(no_avx)]
         {
-            let addr = addr as *const [f32; 4];
             (
                 Vec4f::load_ptr_aligned(addr),
-                Vec4f::load_ptr_aligned(addr.add(1)),
+                Vec4f::load_ptr_aligned(addr.add(4)),
             )
                 .into()
         }
@@ -166,7 +164,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn load(data: &[f32; 8]) -> Self {
-        unsafe { Self::load_ptr(data) }
+        unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
     /// Checks that data contains exactly eight elements and loads them into vector.
@@ -221,7 +219,7 @@ impl Vec8f {
         if data.len() < 8 {
             panic!("data must contain at least 8 elements");
         }
-        unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 8]) }
+        unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
     /// Loads first 8 elements of `data` if available otherwise initializes first elements of
@@ -243,9 +241,9 @@ impl Vec8f {
     #[inline]
     pub fn load_partial(data: &[f32]) -> Self {
         match data.len() {
-            8.. => unsafe { Self::load_ptr(data.as_ptr() as *const [f32; 8]) },
+            8.. => unsafe { Self::load_ptr(data.as_ptr()) },
             4.. => Self::join(
-                unsafe { Vec4f::load_ptr(data.as_ptr() as *const [f32; 4]) },
+                unsafe { Vec4f::load_ptr(data.as_ptr()) },
                 Vec4f::load_partial(data.split_at(4).1),
             ),
             0.. => Self::join(Vec4f::load_partial(data), Vec4f::default()),
@@ -282,17 +280,16 @@ impl Vec8f {
     /// # Safety
     /// `addr` must be a valid pointer.
     #[inline(always)]
-    pub unsafe fn store_ptr(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr(&self, addr: *mut f32) {
         #[cfg(avx)]
         {
-            _mm256_storeu_ps(addr as *mut f32, self.ymm);
+            _mm256_storeu_ps(addr, self.ymm);
         }
 
         #[cfg(no_avx)]
         {
-            let addr = addr as *mut [f32; 4];
             self.low().store_ptr(addr);
-            self.high().store_ptr(addr.add(1));
+            self.high().store_ptr(addr.add(4));
         }
     }
 
@@ -304,17 +301,16 @@ impl Vec8f {
     ///
     /// [`store_ptr`]: Self::store_ptr
     #[inline(always)]
-    pub unsafe fn store_ptr_aligned(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr_aligned(&self, addr: *mut f32) {
         #[cfg(avx)]
         {
-            _mm256_store_ps(addr as *mut f32, self.ymm);
+            _mm256_store_ps(addr, self.ymm);
         }
 
         #[cfg(no_avx)]
         {
-            let addr = addr as *mut [f32; 4];
             self.low().store_ptr_aligned(addr);
-            self.high().store_ptr_aligned(addr.add(1));
+            self.high().store_ptr_aligned(addr.add(4));
         }
     }
 
@@ -328,24 +324,23 @@ impl Vec8f {
     ///
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
     #[inline(always)]
-    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut [f32; 8]) {
+    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut f32) {
         #[cfg(avx)]
         {
-            _mm256_stream_ps(addr as *mut f32, self.ymm)
+            _mm256_stream_ps(addr, self.ymm)
         }
 
         #[cfg(no_avx)]
         {
-            let addr = addr as *mut [f32; 4];
             self.low().store_ptr_non_temporal(addr);
-            self.high().store_ptr_non_temporal(addr.add(1));
+            self.high().store_ptr_non_temporal(addr.add(4));
         }
     }
 
     /// Stores vector into given `array`.
     #[inline(always)]
     pub fn store(&self, array: &mut [f32; 8]) {
-        unsafe { self.store_ptr(array) }
+        unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
     /// Checkes that `slice` contains exactly eight elements and store elements of vector there.
@@ -401,7 +396,7 @@ impl Vec8f {
         if slice.len() < 8 {
             panic!("slice must contain at least 8");
         }
-        unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 8]) };
+        unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
     /// Stores `min(8, slice.len())` elements of vector into prefix of `slice`.
@@ -422,9 +417,9 @@ impl Vec8f {
     #[inline]
     pub fn store_partial(&self, slice: &mut [f32]) {
         match slice.len() {
-            8.. => unsafe { self.store_ptr(slice.as_mut_ptr() as *mut [f32; 8]) },
+            8.. => unsafe { self.store_ptr(slice.as_mut_ptr()) },
             4.. => {
-                unsafe { self.low().store_ptr(slice.as_mut_ptr() as *mut [f32; 4]) };
+                unsafe { self.low().store_ptr(slice.as_mut_ptr()) };
                 self.high().store_partial(slice.split_at_mut(4).1)
             }
             0.. => self.low().store_partial(slice),
@@ -538,7 +533,7 @@ impl Vec8f {
 
         let mut stored = std::mem::MaybeUninit::<AlignedArray>::uninit();
         unsafe {
-            self.store_ptr_aligned(stored.as_mut_ptr() as *mut [f32; 8]);
+            self.store_ptr_aligned(stored.as_mut_ptr() as *mut f32);
             stored.assume_init().0[index]
         }
     }
@@ -665,7 +660,7 @@ impl From<Vec8f> for [f32; 8] {
     fn from(value: Vec8f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
-            value.store_ptr(result.as_mut_ptr());
+            value.store_ptr(result.as_mut_ptr() as *mut f32);
             result.assume_init()
         }
     }

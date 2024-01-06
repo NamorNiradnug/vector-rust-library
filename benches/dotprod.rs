@@ -33,11 +33,11 @@ fn dotprod_vec8f_loop(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
 fn dotprod_vec8f_ptr(vec1: &[f32], vec2: &[f32]) -> f32 {
     assert_eq!(vec1.len(), vec2.len());
     let mut sum = Vec8f::default();
-    let ptr1 = vec1.as_ptr() as *const [f32; 8];
-    let ptr2 = vec2.as_ptr() as *const [f32; 8];
     let whole_iters = vec1.len() / Vec8f::ELEMENTS;
     for i in 0..whole_iters {
-        sum += unsafe { Vec8f::load_ptr(ptr1.add(i)) * Vec8f::load_ptr(ptr2.add(i)) }
+        sum += unsafe {
+            Vec8f::load_ptr(vec1.as_ptr().add(8 * i)) * Vec8f::load_ptr(vec1.as_ptr().add(8 * i))
+        }
     }
     if whole_iters * Vec8f::ELEMENTS < vec1.len() {
         sum += Vec8f::load_partial(vec1.split_at(whole_iters * Vec8f::ELEMENTS).1)
