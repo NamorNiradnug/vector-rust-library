@@ -27,9 +27,9 @@ pub struct Vec8f {
     ymm: __m256,
 
     #[cfg(no_avx)]
-    _low: Vec4f,
+    low: Vec4f,
     #[cfg(no_avx)]
-    _high: Vec4f,
+    high: Vec4f,
 }
 
 impl Vec8f {
@@ -81,7 +81,7 @@ impl Vec8f {
 
         #[cfg(no_avx)]
         {
-            Self { _low: a, _high: b }
+            Self { low: a, high: b }
         }
     }
 
@@ -461,7 +461,7 @@ impl Vec8f {
 
         #[cfg(no_avx)]
         {
-            self._low
+            self.low
         }
     }
 
@@ -482,7 +482,7 @@ impl Vec8f {
 
         #[cfg(no_avx)]
         {
-            self._high
+            self.high
         }
     }
 
