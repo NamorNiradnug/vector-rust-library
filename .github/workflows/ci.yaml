@@ -1,0 +1,98 @@
+# borrowed from https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
+
+  test_miri:
+    name: Test Suite (Miri; no AVX, no SSE4)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2024-01-07
+          override: true
+          components: miri
+      - uses: actions-rs/cargo@v1
+        with:
+          command: miri
+          args: test
+        env:
+          RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
+          MIRIFLAGS: -Zmiri-symbolic-alignment-check
+      - uses: Swatinem/rust-cache@v2
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
+
+  clippy_32bits:
+    name: Clippy (32 bits; no AVX, no SSE4)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2024-01-07
+          override: true
+          target: i686-unknown-linux-gnu
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: clippy
+          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
+        env:
+          RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
+      - uses: Swatinem/rust-cache@v2
+
