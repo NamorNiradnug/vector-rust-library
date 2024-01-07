@@ -23,6 +23,8 @@ cfg_if::cfg_if! {
     }
 }
 /// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
+///
+/// [`__m128`]: crate::intrinsics::__m128
 #[derive(Clone, Copy, Add, Sub, Mul, Div, Neg, PartialEq)]
 #[mul(forward)]
 #[div(forward)]
@@ -361,11 +363,6 @@ impl Vec4f {
     #[inline]
     pub fn extract(self, index: usize) -> f32 {
         // NOTE: Agner Fog uses `int` as `index` type. Should we make it `isize` or `i32` too?
-        // NOTE: Agner Fog's implementation uses `index & 3` and works with any `index` value.
-        // Should we also implement such behavior instead of panicing?
-        // If so, a panicing version should be named `extract_checked` and Fog's version should be
-        // called `extract`.
-
         if index >= Self::ELEMENTS {
             panic!("invalid index");
         }
@@ -381,6 +378,19 @@ impl Vec4f {
             self.store_ptr_aligned(stored.as_mut_ptr() as *mut f32);
             stored.assume_init().0[index]
         }
+    }
+
+    /// Extracts `index % 4`-th element of the vector. This corresponds to the original [`extract`]
+    /// function from VCL.
+    ///
+    /// ```
+    /// # use vrl::Vec4f;
+    /// assert_eq!(Vec4f::new(1.0, 2.0, 3.0, 4.0).extract_wrapping(6), 3.0);
+    /// ```
+    ///
+    /// [`extract`]: https://github.com/vectorclass/version2/blob/f4617df57e17efcd754f5bbe0ec87883e0ed9ce6/vectorf128.h#L616
+    pub fn extract_wrapping(self, index: usize) -> f32 {
+        self.extract(index & 3)
     }
 
     /// Extracts `INDEX`-th element of the vector. Does same as [`extract`](Self::extract) with compile-time known

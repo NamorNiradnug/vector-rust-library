@@ -451,6 +451,19 @@ impl Vec8f {
         }
     }
 
+    /// Extracts `index % 8`-th element of the vector. This corresponds to the original [`extract`]
+    /// function from VCL.
+    ///
+    /// ```
+    /// # use vrl::Vec8f;
+    /// assert_eq!(Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0).extract_wrapping(13), 6.0);
+    /// ```
+    ///
+    /// [`extract`]: https://github.com/vectorclass/version2/blob/f4617df57e17efcd754f5bbe0ec87883e0ed9ce6/vectorf256.h#L705
+    pub fn extract_wrapping(self, index: usize) -> f32 {
+        self.extract(index & 7)
+    }
+
     /// Extracts `INDEX`-th element of the vector. Does same as [`extract`](Self::extract) with compile-time known
     /// index.
     ///
