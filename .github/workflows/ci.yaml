@@ -28,7 +28,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2024-01-07
           override: true
           components: miri
       - uses: actions-rs/cargo@v1
@@ -38,6 +38,7 @@ jobs:
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
           MIRIFLAGS: -Zmiri-symbolic-alignment-check
+      - uses: Swatinem/rust-cache@v2
 
   fmt:
     name: Rustfmt
@@ -83,7 +84,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: nightly-2024-01-07
           override: true
           target: i686-unknown-linux-gnu
       - uses: actions-rs/cargo@v1
@@ -93,4 +94,5 @@ jobs:
           args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
+      - uses: Swatinem/rust-cache@v2
 
