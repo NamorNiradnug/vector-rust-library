@@ -1,6 +1,5 @@
-macro_rules! vec_overload_operator {
-    ($vectype: ty, $op_trait: ident, $op_name: ident, $intrinsic: ident, $basic_impl_condition: meta) => {
-        #[cfg($basic_impl_condition)]
+macro_rules! vecbase_impl_binary_op {
+    ($vectype: ty, $op_trait: tt, $op_name: tt, $intrinsic: tt) => {
         impl $op_trait for $vectype {
             type Output = Self;
             #[inline(always)]
@@ -8,7 +7,11 @@ macro_rules! vec_overload_operator {
                 unsafe { $intrinsic(self.into(), rhs.into()).into() }
             }
         }
+    };
+}
 
+macro_rules! vec_overload_operator {
+    ($vectype: ty, $op_trait: ident, $op_name: ident) => {
         impl $op_trait<<$vectype as SIMDVector>::Element> for $vectype {
             type Output = Self;
             #[inline(always)]
@@ -55,5 +58,4 @@ macro_rules! vec_impl_sum_prod {
     };
 }
 
-pub(crate) use vec_impl_sum_prod;
-pub(crate) use vec_overload_operator;
+pub(crate) use {vec_impl_sum_prod, vec_overload_operator, vecbase_impl_binary_op};

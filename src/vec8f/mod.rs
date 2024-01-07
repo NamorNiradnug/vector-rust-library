@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign},
 };
 
 use crate::{
@@ -11,26 +11,27 @@ use crate::{
     Vec4f,
 };
 
-#[cfg(no_avx)]
-use derive_more::{Add, Div, Mul, Sub};
+use derive_more::{Add, Div, Mul, Neg, Sub};
+
+cfg_if::cfg_if! {
+    if #[cfg(avx)] {
+        mod avx;
+        use avx::{Vec8fBase, Underlying};
+    } else {
+        mod fallback;
+        use fallback::{Vec8fBase, Underlying};
+    }
+}
 
 /// Represents a packed vector of 8 single-precision floating-point values.
 ///
 /// On platforms with AVX support [`Vec8f`] is a [`__m256`] wrapper. Otherwise it is a pair of
 /// [`Vec4f`] values.
-#[derive(Clone, Copy)]
-#[cfg_attr(no_avx, derive(Add, Sub, Mul, Div), mul(forward), div(forward))]
-#[cfg_attr(avx, repr(transparent))]
-#[cfg_attr(no_avx, repr(C))] // [repr(C)] guarantees fields ordering and paddinglessness.
-pub struct Vec8f {
-    #[cfg(avx)]
-    ymm: __m256,
-
-    #[cfg(no_avx)]
-    low: Vec4f,
-    #[cfg(no_avx)]
-    high: Vec4f,
-}
+#[derive(Clone, Copy, Add, Sub, Mul, Div, Neg, PartialEq)]
+#[mul(forward)]
+#[div(forward)]
+#[repr(transparent)]
+pub struct Vec8f(Vec8fBase);
 
 impl Vec8f {
     /// Initializes elements of returned vector with given values.
@@ -46,15 +47,7 @@ impl Vec8f {
     #[inline(always)]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            (Vec4f::new(v0, v1, v2, v3), Vec4f::new(v4, v5, v6, v7)).into()
-        }
+        Self(Vec8fBase::new(v0, v1, v2, v3, v4, v5, v6, v7))
     }
 
     /// Joins two [`Vec4f`] into a single [`Vec8f`]. The first four elements of returned vector are
@@ -74,15 +67,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn join(a: Vec4f, b: Vec4f) -> Self {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_set_m128(b.into(), a.into()) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            Self { low: a, high: b }
-        }
+        Self(Vec8fBase::join(a, b))
     }
 
     /// Loads vector from array pointer by `addr`.
@@ -99,15 +84,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub unsafe fn load_ptr(addr: *const f32) -> Self {
-        #[cfg(avx)]
-        {
-            _mm256_loadu_ps(addr).into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            (Vec4f::load_ptr(addr), Vec4f::load_ptr(addr.add(4))).into()
-        }
+        Self(Vec8fBase::load_ptr(addr))
     }
 
     /// Loads vector from aligned array pointed by `addr`.
@@ -137,19 +114,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
-        #[cfg(avx)]
-        {
-            _mm256_load_ps(addr).into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            (
-                Vec4f::load_ptr_aligned(addr),
-                Vec4f::load_ptr_aligned(addr.add(4)),
-            )
-                .into()
-        }
+        Self(Vec8fBase::load_ptr_aligned(addr))
     }
 
     /// Loads values of returned vector from given data.
@@ -263,16 +228,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn broadcast(value: f32) -> Self {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_set1_ps(value) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            let half = Vec4f::broadcast(value);
-            (half, half).into()
-        }
+        Self(Vec8fBase::broadcast(value))
     }
 
     /// Stores vector into array at given address.
@@ -280,17 +236,8 @@ impl Vec8f {
     /// # Safety
     /// `addr` must be a valid pointer.
     #[inline(always)]
-    pub unsafe fn store_ptr(&self, addr: *mut f32) {
-        #[cfg(avx)]
-        {
-            _mm256_storeu_ps(addr, self.ymm);
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.low().store_ptr(addr);
-            self.high().store_ptr(addr.add(4));
-        }
+    pub unsafe fn store_ptr(self, addr: *mut f32) {
+        self.0.store_ptr(addr)
     }
 
     /// Stores vector into aligned array at given address.
@@ -301,17 +248,8 @@ impl Vec8f {
     ///
     /// [`store_ptr`]: Self::store_ptr
     #[inline(always)]
-    pub unsafe fn store_ptr_aligned(&self, addr: *mut f32) {
-        #[cfg(avx)]
-        {
-            _mm256_store_ps(addr, self.ymm);
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.low().store_ptr_aligned(addr);
-            self.high().store_ptr_aligned(addr.add(4));
-        }
+    pub unsafe fn store_ptr_aligned(self, addr: *mut f32) {
+        self.0.store_ptr_aligned(addr);
     }
 
     /// Stores vector into aligned array at given address in uncached memory (non-temporal store).
@@ -324,17 +262,8 @@ impl Vec8f {
     ///
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
     #[inline(always)]
-    pub unsafe fn store_ptr_non_temporal(&self, addr: *mut f32) {
-        #[cfg(avx)]
-        {
-            _mm256_stream_ps(addr, self.ymm)
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.low().store_ptr_non_temporal(addr);
-            self.high().store_ptr_non_temporal(addr.add(4));
-        }
+    pub unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
+        self.0.store_ptr_non_temporal(addr);
     }
 
     /// Stores vector into given `array`.
@@ -449,15 +378,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn low(self) -> Vec4f {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_castps256_ps128(self.ymm) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.low
-        }
+        self.0.low()
     }
 
     /// Returns the last four elements of vector.
@@ -470,15 +391,7 @@ impl Vec8f {
     /// ```
     #[inline(always)]
     pub fn high(self) -> Vec4f {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_extractf128_ps(self.ymm, 1) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.high
-        }
+        self.0.high()
     }
 
     /// Splits vector into low and high halfs.
@@ -567,10 +480,7 @@ impl Vec8f {
 }
 
 impl SIMDVector for Vec8f {
-    #[cfg(avx)]
-    type Underlying = __m256;
-    #[cfg(no_avx)]
-    type Underlying = (Vec4f, Vec4f);
+    type Underlying = Underlying;
 
     type Element = f32;
     const ELEMENTS: usize = 8;
@@ -586,59 +496,15 @@ impl Default for Vec8f {
     /// ```
     #[inline(always)]
     fn default() -> Self {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_setzero_ps() }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            (Vec4f::default(), Vec4f::default()).into()
-        }
+        Self(Vec8fBase::default())
     }
 }
 
-impl Neg for Vec8f {
-    type Output = Self;
-
-    /// Flips sign bit of each element including non-finite ones.
-    #[inline(always)]
-    fn neg(self) -> Self::Output {
-        #[cfg(avx)]
-        {
-            unsafe { _mm256_xor_ps(self.ymm, _mm256_set1_ps(-0f32)) }.into()
-        }
-
-        #[cfg(no_avx)]
-        {
-            (-self.low(), -self.high()).into()
-        }
-    }
-}
-
-vec_overload_operator!(Vec8f, Add, add, _mm256_add_ps, avx);
-vec_overload_operator!(Vec8f, Sub, sub, _mm256_sub_ps, avx);
-vec_overload_operator!(Vec8f, Mul, mul, _mm256_mul_ps, avx);
-vec_overload_operator!(Vec8f, Div, div, _mm256_div_ps, avx);
+vec_overload_operator!(Vec8f, Add, add);
+vec_overload_operator!(Vec8f, Sub, sub);
+vec_overload_operator!(Vec8f, Mul, mul);
+vec_overload_operator!(Vec8f, Div, div);
 vec_impl_sum_prod!(Vec8f);
-
-#[cfg(avx)]
-impl From<__m256> for Vec8f {
-    /// Wraps given `value` into [`Vec8f`].
-    #[inline(always)]
-    fn from(value: __m256) -> Self {
-        Self { ymm: value }
-    }
-}
-
-#[cfg(avx)]
-impl From<Vec8f> for __m256 {
-    /// Unwraps given vector into raw [`__m256`] value.
-    #[inline(always)]
-    fn from(value: Vec8f) -> Self {
-        value.ymm
-    }
-}
 
 impl From<&[f32; 8]> for Vec8f {
     /// Does same as [`load`](Self::load).
@@ -686,40 +552,6 @@ impl From<Vec8f> for (Vec4f, Vec4f) {
     #[inline(always)]
     fn from(vec: Vec8f) -> (Vec4f, Vec4f) {
         vec.split()
-    }
-}
-
-impl PartialEq for Vec8f {
-    /// Checks whether all elements of vectors are equal.
-    ///
-    /// __Note__: when [`NaN`](`f32::NAN`) is an element of one of the operands the result is always `false`.
-    ///
-    /// # Examples
-    /// ```
-    /// # use vrl::Vec8f;
-    /// let a = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
-    /// assert_eq!(a, a);
-    /// ```
-    ///
-    /// ```
-    /// # use vrl::Vec8f;
-    /// let a = Vec8f::broadcast(f32::NAN);
-    /// assert_ne!(a, a);
-    /// ```
-    #[inline(always)]
-    fn eq(&self, other: &Self) -> bool {
-        #[cfg(avx)]
-        {
-            unsafe {
-                let cmp_result = _mm256_cmp_ps::<0>(self.ymm, other.ymm);
-                _mm256_testz_ps(cmp_result, cmp_result) == 0
-            }
-        }
-
-        #[cfg(no_avx)]
-        {
-            self.split() == other.split()
-        }
     }
 }
 

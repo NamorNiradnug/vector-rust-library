@@ -15,6 +15,8 @@ pub trait SIMDVector
 where
     Self: From<Self::Underlying>
         + Default
+        + Clone
+        + Copy
         + Neg<Output = Self>
         + Add<Self>
         + Add<Self::Element>

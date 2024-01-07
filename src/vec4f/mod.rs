@@ -1,21 +1,33 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign},
 };
 
 use crate::{
     common::SIMDVector,
-    intrinsics::*,
+    intrinsics::_mm_extract_ps,
     macros::{vec_impl_sum_prod, vec_overload_operator},
 };
 
-/// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-pub struct Vec4f {
-    xmm: __m128,
+use derive_more::{Add, Div, Mul, Neg, Sub};
+
+cfg_if::cfg_if! {
+    if #[cfg(sse)] {
+        mod sse;
+        use sse::{Vec4fBase, Underlying};
+    } else {
+        compile_error!("Currently SSE is required for Vec4f");
+        mod fallback;
+        use fallback::{Vec4fBase, Underlying};
+    }
 }
+/// Represents a packed vector of 4 single-precision floating-point values. [`__m128`] wrapper.
+#[derive(Clone, Copy, Add, Sub, Mul, Div, Neg, PartialEq)]
+#[mul(forward)]
+#[div(forward)]
+#[repr(transparent)]
+pub struct Vec4f(Vec4fBase);
 
 impl Vec4f {
     /// Initializes elements of returned vector with given values.
@@ -31,7 +43,7 @@ impl Vec4f {
     #[inline(always)]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
-        unsafe { _mm_setr_ps(v0, v1, v2, v3) }.into()
+        Self(Vec4fBase::new(v0, v1, v2, v3))
     }
 
     /// Loads vector from array pointer by `addr`.
@@ -48,7 +60,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub unsafe fn load_ptr(addr: *const f32) -> Self {
-        _mm_loadu_ps(addr).into()
+        Self(Vec4fBase::load_ptr(addr))
     }
 
     /// Loads vector from aligned array pointed by `addr`.
@@ -78,7 +90,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
-        _mm_load_ps(addr).into()
+        Self(Vec4fBase::load_ptr_aligned(addr))
     }
 
     /// Loads values of returned vector from given data.
@@ -191,7 +203,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub fn broadcast(value: f32) -> Self {
-        unsafe { _mm_set1_ps(value) }.into()
+        Self(Vec4fBase::broadcast(value))
     }
 
     /// Stores vector into array at given address.
@@ -200,7 +212,7 @@ impl Vec4f {
     /// `addr` must be a valid pointer.
     #[inline(always)]
     pub unsafe fn store_ptr(&self, addr: *mut f32) {
-        _mm_storeu_ps(addr, self.xmm)
+        self.0.store_ptr(addr);
     }
 
     /// Stores vector into aligned array at given address.
@@ -212,7 +224,7 @@ impl Vec4f {
     /// [`store_ptr`]: Self::store_ptr
     #[inline(always)]
     pub unsafe fn store_ptr_aligned(&self, addr: *mut f32) {
-        _mm_store_ps(addr, self.xmm)
+        self.0.store_ptr_aligned(addr);
     }
 
     /// Stores vector into aligned array at given address in uncached memory (non-temporal store).
@@ -226,7 +238,7 @@ impl Vec4f {
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
     #[inline(always)]
     pub unsafe fn store_ptr_non_temporal(&self, addr: *mut f32) {
-        _mm_stream_ps(addr, self.xmm)
+        self.0.store_ptr_non_temporal(addr);
     }
 
     /// Stores vector into given `array`.
@@ -323,16 +335,7 @@ impl Vec4f {
     /// ```
     #[inline(always)]
     pub fn sum(self) -> f32 {
-        // According to Agner Fog, using `hadd` is inefficient.
-        // src: https://github.com/vectorclass/version2/blob/master/vectorf128.h#L1043
-        // TODO: benchmark this implementation and `hadd`-based one
-        unsafe {
-            let t1 = _mm_movehl_ps(self.xmm, self.xmm);
-            let t2 = _mm_add_ps(self.xmm, t1);
-            let t3 = _mm_shuffle_ps(t2, t2, 1);
-            let t4 = _mm_add_ss(t2, t3);
-            _mm_cvtss_f32(t4)
-        }
+        self.0.sum()
     }
 
     /// Extracts `index`-th element of the vector. Index `0` corresponds to the "most left"
@@ -406,7 +409,7 @@ impl Vec4f {
 }
 
 impl SIMDVector for Vec4f {
-    type Underlying = __m128;
+    type Underlying = Underlying;
     type Element = f32;
     const ELEMENTS: usize = 4;
 }
@@ -421,41 +424,15 @@ impl Default for Vec4f {
     /// ```
     #[inline(always)]
     fn default() -> Self {
-        unsafe { _mm_setzero_ps() }.into()
+        Self(Vec4fBase::default())
     }
 }
 
-impl Neg for Vec4f {
-    type Output = Self;
-
-    /// Flips sign bit of each element including non-finite ones.
-    #[inline(always)]
-    fn neg(self) -> Self::Output {
-        unsafe { _mm_xor_ps(self.xmm, _mm_set1_ps(-0f32)) }.into()
-    }
-}
-
-vec_overload_operator!(Vec4f, Add, add, _mm_add_ps, sse);
-vec_overload_operator!(Vec4f, Sub, sub, _mm_sub_ps, sse);
-vec_overload_operator!(Vec4f, Mul, mul, _mm_mul_ps, sse);
-vec_overload_operator!(Vec4f, Div, div, _mm_div_ps, sse);
+vec_overload_operator!(Vec4f, Add, add);
+vec_overload_operator!(Vec4f, Sub, sub);
+vec_overload_operator!(Vec4f, Mul, mul);
+vec_overload_operator!(Vec4f, Div, div);
 vec_impl_sum_prod!(Vec4f);
-
-impl From<__m128> for Vec4f {
-    /// Wraps given `value` into [`Vec4f`].
-    #[inline(always)]
-    fn from(value: __m128) -> Self {
-        Self { xmm: value }
-    }
-}
-
-impl From<Vec4f> for __m128 {
-    /// Unwraps given vector into raw [`__m128`] value.
-    #[inline(always)]
-    fn from(value: Vec4f) -> Self {
-        value.xmm
-    }
-}
 
 impl From<&[f32; 4]> for Vec4f {
     /// Does same as [`load`](Self::load).
@@ -487,33 +464,6 @@ impl From<&Vec4f> for [f32; 4] {
     #[inline(always)]
     fn from(value: &Vec4f) -> Self {
         unsafe { *(value as *const Vec4f as *const [f32; 4]) }
-    }
-}
-
-impl PartialEq for Vec4f {
-    /// Checks whether all elements of vectors are equal.
-    ///
-    /// __Note__: when [`NaN`](`f32::NAN`) is an element of one of the operands the result is always `false`.
-    ///
-    /// # Examples
-    /// ```
-    /// # use vrl::Vec4f;
-    /// let a = Vec4f::new(1.0, 2.0, 3.0, 4.0);
-    /// assert_eq!(a, a);
-    /// assert_ne!(a, Vec4f::default());
-    /// ```
-    ///
-    /// ```
-    /// # use vrl::Vec4f;
-    /// let a = Vec4f::broadcast(f32::NAN);
-    /// assert_ne!(a, a);
-    /// ```
-    #[inline(always)]
-    fn eq(&self, other: &Self) -> bool {
-        unsafe {
-            let cmp_result = _mm_cmpeq_ps(self.xmm, other.xmm);
-            _mm_movemask_ps(cmp_result) == 0x0F
-        }
     }
 }
 
