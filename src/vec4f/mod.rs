@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
 };
 
 use crate::{
@@ -477,6 +477,7 @@ impl Debug for Vec4f {
     }
 }
 
+/*
 impl Index<usize> for Vec4f {
     type Output = f32;
 
@@ -528,6 +529,7 @@ impl IndexMut<usize> for Vec4f {
         unsafe { &mut *(self as *mut Self as *mut f32).add(index) }
     }
 }
+*/
 
 #[cfg(test)]
 mod tests {
