@@ -1,7 +1,7 @@
 use std::{
     fmt::Debug,
     mem::MaybeUninit,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Sub, SubAssign},
 };
 
 use crate::{
@@ -548,7 +548,7 @@ impl From<Vec8f> for [f32; 8] {
 impl From<&Vec8f> for [f32; 8] {
     #[inline]
     fn from(value: &Vec8f) -> Self {
-        unsafe { *(value as *const Vec8f as *const [f32; 8]) }
+        unsafe { std::mem::transmute_copy(value) }
     }
 }
 
@@ -578,7 +578,6 @@ impl Debug for Vec8f {
     }
 }
 
-/*
 impl Index<usize> for Vec8f {
     type Output = f32;
 
@@ -630,7 +629,6 @@ impl IndexMut<usize> for Vec8f {
         unsafe { &mut *(self as *mut Self as *mut f32).add(index) }
     }
 }
-*/
 
 #[cfg(test)]
 mod tests {
