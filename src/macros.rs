@@ -2,7 +2,7 @@ macro_rules! vecbase_impl_binary_op {
     ($vectype: ty, $op_trait: tt, $op_name: tt, $intrinsic: tt) => {
         impl $op_trait for $vectype {
             type Output = Self;
-            #[inline(always)]
+            #[inline]
             fn $op_name(self, rhs: Self) -> Self::Output {
                 unsafe { $intrinsic(self.into(), rhs.into()).into() }
             }
@@ -14,7 +14,7 @@ macro_rules! vec_overload_operator {
     ($vectype: ty, $op_trait: ident, $op_name: ident) => {
         impl $op_trait<<$vectype as SIMDVector>::Element> for $vectype {
             type Output = Self;
-            #[inline(always)]
+            #[inline]
             fn $op_name(self, rhs: <$vectype as SIMDVector>::Element) -> Self::Output {
                 self.$op_name(<$vectype>::broadcast(rhs))
             }
@@ -22,7 +22,7 @@ macro_rules! vec_overload_operator {
 
         impl $op_trait<$vectype> for <$vectype as SIMDVector>::Element {
             type Output = $vectype;
-            #[inline(always)]
+            #[inline]
             fn $op_name(self, rhs: $vectype) -> Self::Output {
                 rhs.$op_name(self)
             }
@@ -33,7 +33,7 @@ macro_rules! vec_overload_operator {
         where
             Self: $op_trait<T, Output = Self>,
         {
-            #[inline(always)]
+            #[inline]
             fn [<$op_name _assign>](&mut self, rhs: T) {
                 *self = self.$op_name(rhs);
             }

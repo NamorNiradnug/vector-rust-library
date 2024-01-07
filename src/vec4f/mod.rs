@@ -40,7 +40,7 @@ impl Vec4f {
     ///     [1.0, 2.0, 3.0, 4.0].into()
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
         Self(Vec4fBase::new(v0, v1, v2, v3))
@@ -58,7 +58,7 @@ impl Vec4f {
     /// let array = [42.0; 4];
     /// let vec = unsafe { Vec4f::load_ptr(array.as_ptr()) };
     /// ```
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr(addr: *const f32) -> Self {
         Self(Vec4fBase::load_ptr(addr))
     }
@@ -88,7 +88,7 @@ impl Vec4f {
     /// let zeros = unsafe { std::mem::zeroed::<[u16; 10]>() };
     /// unsafe { Vec4f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const f32) };
     /// ```
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         Self(Vec4fBase::load_ptr_aligned(addr))
     }
@@ -103,7 +103,7 @@ impl Vec4f {
     ///     Vec4f::load(&[1.0, 2.0, 3.0, 4.0])
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load(data: &[f32; 4]) -> Self {
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
@@ -129,7 +129,7 @@ impl Vec4f {
     /// # use vrl::Vec4f;
     /// Vec4f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0]);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load_checked(data: &[f32]) -> Self {
         Self::load(
             data.try_into()
@@ -155,7 +155,7 @@ impl Vec4f {
     /// # use vrl::Vec4f;
     /// Vec4f::load_prefix(&[1.0, 2.0, 3.0]);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load_prefix(data: &[f32]) -> Self {
         if data.len() < 4 {
             panic!("data must contain at least 4 elements");
@@ -201,7 +201,7 @@ impl Vec4f {
     ///     [42.0; 4].into()
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn broadcast(value: f32) -> Self {
         Self(Vec4fBase::broadcast(value))
     }
@@ -210,7 +210,7 @@ impl Vec4f {
     ///
     /// # Safety
     /// `addr` must be a valid pointer.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr(&self, addr: *mut f32) {
         self.0.store_ptr(addr);
     }
@@ -222,7 +222,7 @@ impl Vec4f {
     /// Unlike [`store_ptr`], requires `addr` to be divisible by `16`, i.e. to be a 16-bytes aligned address.
     ///
     /// [`store_ptr`]: Self::store_ptr
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_aligned(&self, addr: *mut f32) {
         self.0.store_ptr_aligned(addr);
     }
@@ -236,13 +236,13 @@ impl Vec4f {
     /// divisible by `16`, i.e. to be a 16-bytes aligned address.
     ///
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_non_temporal(&self, addr: *mut f32) {
         self.0.store_ptr_non_temporal(addr);
     }
 
     /// Stores vector into given `array`.
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, array: &mut [f32; 4]) {
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
@@ -295,7 +295,7 @@ impl Vec4f {
     /// let mut data = [-1.0; 3];
     /// Vec4f::default().store_prefix(&mut data);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn store_prefix(&self, slice: &mut [f32]) {
         if slice.len() < 4 {
             panic!("slice must contain at least 4 elements");
@@ -333,7 +333,7 @@ impl Vec4f {
     /// # use vrl::Vec4f;
     /// assert_eq!(Vec4f::new(1.0, 2.0, 3.0, 4.0).sum(), 10.0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn sum(self) -> f32 {
         self.0.sum()
     }
@@ -397,7 +397,7 @@ impl Vec4f {
     /// Vec4f::default().extract_const::<5>();
     /// # #[cfg(miri)] { compile_error!() }
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
         if cfg!(sse41) {
             // TODO: benchmark this code to make sure it's actually faster than fallback version
@@ -422,7 +422,7 @@ impl Default for Vec4f {
     /// # use vrl::Vec4f;
     /// assert_eq!(Vec4f::default(), Vec4f::broadcast(0.0));
     /// ```
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self(Vec4fBase::default())
     }
@@ -436,21 +436,21 @@ vec_impl_sum_prod!(Vec4f);
 
 impl From<&[f32; 4]> for Vec4f {
     /// Does same as [`load`](Self::load).
-    #[inline(always)]
+    #[inline]
     fn from(value: &[f32; 4]) -> Self {
         Self::load(value)
     }
 }
 
 impl From<[f32; 4]> for Vec4f {
-    #[inline(always)]
+    #[inline]
     fn from(value: [f32; 4]) -> Self {
         (&value).into()
     }
 }
 
 impl From<Vec4f> for [f32; 4] {
-    #[inline(always)]
+    #[inline]
     fn from(value: Vec4f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
@@ -461,7 +461,7 @@ impl From<Vec4f> for [f32; 4] {
 }
 
 impl From<&Vec4f> for [f32; 4] {
-    #[inline(always)]
+    #[inline]
     fn from(value: &Vec4f) -> Self {
         unsafe { *(value as *const Vec4f as *const [f32; 4]) }
     }
@@ -510,7 +510,7 @@ impl Index<usize> for Vec4f {
     /// let second_value = vec[1];
     /// assert_eq!(second_value, 4.0);
     /// ```
-    #[inline(always)]
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         if index >= Self::ELEMENTS {
             panic!("invalid index");
@@ -520,7 +520,7 @@ impl Index<usize> for Vec4f {
 }
 
 impl IndexMut<usize> for Vec4f {
-    #[inline(always)]
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         if index >= Self::ELEMENTS {
             panic!("invalid index");

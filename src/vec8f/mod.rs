@@ -44,7 +44,7 @@ impl Vec8f {
     ///     [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0].into()
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
         Self(Vec8fBase::new(v0, v1, v2, v3, v4, v5, v6, v7))
@@ -65,7 +65,7 @@ impl Vec8f {
     /// assert_eq!(b, joined.high());
     /// assert_eq!(joined.split(), (a, b));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn join(a: Vec4f, b: Vec4f) -> Self {
         Self(Vec8fBase::join(a, b))
     }
@@ -82,7 +82,7 @@ impl Vec8f {
     /// let array = [42.0; 8];
     /// let vec = unsafe { Vec8f::load_ptr(array.as_ptr()) };
     /// ```
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr(addr: *const f32) -> Self {
         Self(Vec8fBase::load_ptr(addr))
     }
@@ -112,7 +112,7 @@ impl Vec8f {
     /// let zeros = unsafe { std::mem::zeroed::<[u16; 20]>() };
     /// unsafe { Vec8f::load_ptr_aligned(zeros.as_ptr().byte_add(1) as *const f32) };
     /// ```
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         Self(Vec8fBase::load_ptr_aligned(addr))
     }
@@ -127,7 +127,7 @@ impl Vec8f {
     ///     Vec8f::load(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load(data: &[f32; 8]) -> Self {
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
@@ -153,7 +153,7 @@ impl Vec8f {
     /// # use vrl::Vec8f;
     /// Vec8f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load_checked(data: &[f32]) -> Self {
         Self::load(
             data.try_into()
@@ -179,7 +179,7 @@ impl Vec8f {
     /// # use vrl::Vec8f;
     /// Vec8f::load_prefix(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn load_prefix(data: &[f32]) -> Self {
         if data.len() < 8 {
             panic!("data must contain at least 8 elements");
@@ -226,7 +226,7 @@ impl Vec8f {
     ///     [42.0; 8].into()
     /// );
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn broadcast(value: f32) -> Self {
         Self(Vec8fBase::broadcast(value))
     }
@@ -235,7 +235,7 @@ impl Vec8f {
     ///
     /// # Safety
     /// `addr` must be a valid pointer.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr(self, addr: *mut f32) {
         self.0.store_ptr(addr)
     }
@@ -247,7 +247,7 @@ impl Vec8f {
     /// Unlike [`store_ptr`], requires `addr` to be divisible by `32`, i.e. to be a 32-bytes aligned address.
     ///
     /// [`store_ptr`]: Self::store_ptr
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_aligned(self, addr: *mut f32) {
         self.0.store_ptr_aligned(addr);
     }
@@ -261,13 +261,13 @@ impl Vec8f {
     /// divisible by `32`, i.e. to be a 32-bytes aligned address.
     ///
     /// [`store_ptr_aligned`]: Self::store_ptr_aligned
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
         self.0.store_ptr_non_temporal(addr);
     }
 
     /// Stores vector into given `array`.
-    #[inline(always)]
+    #[inline]
     pub fn store(&self, array: &mut [f32; 8]) {
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
@@ -320,7 +320,7 @@ impl Vec8f {
     /// let mut data = [-1.0; 7];
     /// Vec8f::default().store_prefix(&mut data);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn store_prefix(&self, slice: &mut [f32]) {
         if slice.len() < 8 {
             panic!("slice must contain at least 8");
@@ -363,7 +363,7 @@ impl Vec8f {
     /// let vec = Vec8f::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
     /// assert_eq!(vec.sum(), 36.0);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn sum(self) -> f32 {
         (self.low() + self.high()).sum()
     }
@@ -376,7 +376,7 @@ impl Vec8f {
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
     /// assert_eq!(vec8.low(), Vec4f::broadcast(1.0));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn low(self) -> Vec4f {
         self.0.low()
     }
@@ -389,7 +389,7 @@ impl Vec8f {
     /// let vec8 = Vec8f::new(1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0);
     /// assert_eq!(vec8.high(), Vec4f::broadcast(2.0));
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn high(self) -> Vec4f {
         self.0.high()
     }
@@ -407,7 +407,7 @@ impl Vec8f {
     /// assert_eq!(high, vec.high());
     /// assert_eq!(Vec8f::join(low, high), vec);
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn split(self) -> (Vec4f, Vec4f) {
         (self.low(), self.high())
     }
@@ -465,7 +465,7 @@ impl Vec8f {
     /// Vec8f::default().extract_const::<9>();
     /// # #[cfg(miri)] { compile_error!() }
     /// ```
-    #[inline(always)]
+    #[inline]
     pub fn extract_const<const INDEX: i32>(self) -> f32 {
         // TODO: optimize
 
@@ -494,7 +494,7 @@ impl Default for Vec8f {
     /// # use vrl::Vec8f;
     /// assert_eq!(Vec8f::default(), Vec8f::broadcast(0.0));
     /// ```
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         Self(Vec8fBase::default())
     }
@@ -508,21 +508,21 @@ vec_impl_sum_prod!(Vec8f);
 
 impl From<&[f32; 8]> for Vec8f {
     /// Does same as [`load`](Self::load).
-    #[inline(always)]
+    #[inline]
     fn from(value: &[f32; 8]) -> Self {
         Self::load(value)
     }
 }
 
 impl From<[f32; 8]> for Vec8f {
-    #[inline(always)]
+    #[inline]
     fn from(value: [f32; 8]) -> Self {
         (&value).into()
     }
 }
 
 impl From<Vec8f> for [f32; 8] {
-    #[inline(always)]
+    #[inline]
     fn from(value: Vec8f) -> Self {
         let mut result = MaybeUninit::<Self>::uninit();
         unsafe {
@@ -533,7 +533,7 @@ impl From<Vec8f> for [f32; 8] {
 }
 
 impl From<&Vec8f> for [f32; 8] {
-    #[inline(always)]
+    #[inline]
     fn from(value: &Vec8f) -> Self {
         unsafe { *(value as *const Vec8f as *const [f32; 8]) }
     }
@@ -541,7 +541,7 @@ impl From<&Vec8f> for [f32; 8] {
 
 impl From<(Vec4f, Vec4f)> for Vec8f {
     /// Does same as [`join`](Self::join).
-    #[inline(always)]
+    #[inline]
     fn from((low, high): (Vec4f, Vec4f)) -> Self {
         Self::join(low, high)
     }
@@ -549,7 +549,7 @@ impl From<(Vec4f, Vec4f)> for Vec8f {
 
 impl From<Vec8f> for (Vec4f, Vec4f) {
     /// Does same as [`split`](Vec8f::split).
-    #[inline(always)]
+    #[inline]
     fn from(vec: Vec8f) -> (Vec4f, Vec4f) {
         vec.split()
     }
@@ -598,7 +598,7 @@ impl Index<usize> for Vec8f {
     /// let second_value = vec[4];
     /// assert_eq!(second_value, 13.0);
     /// ```
-    #[inline(always)]
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         if index >= Vec8f::ELEMENTS {
             panic!("invalid index");
@@ -608,7 +608,7 @@ impl Index<usize> for Vec8f {
 }
 
 impl IndexMut<usize> for Vec8f {
-    #[inline(always)]
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         if index >= Self::ELEMENTS {
             panic!("invalid index");

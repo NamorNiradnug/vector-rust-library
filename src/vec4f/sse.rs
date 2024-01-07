@@ -8,43 +8,43 @@ pub type Underlying = __m128;
 pub struct Vec4fBase(__m128);
 
 impl Vec4fBase {
-    #[inline(always)]
+    #[inline]
     #[allow(clippy::too_many_arguments)]
     pub fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
         unsafe { _mm_setr_ps(v0, v1, v2, v3) }.into()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn broadcast(value: f32) -> Self {
         unsafe { _mm_set1_ps(value) }.into()
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr(addr: *const f32) -> Self {
         _mm_loadu_ps(addr).into()
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         _mm_load_ps(addr).into()
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr(self, addr: *mut f32) {
         _mm_storeu_ps(addr, self.0);
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_aligned(self, addr: *mut f32) {
         _mm_store_ps(addr, self.0);
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
         _mm_stream_ps(addr, self.0)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn sum(self) -> f32 {
         // According to Agner Fog, using `hadd` is inefficient.
         // src: https://github.com/vectorclass/version2/blob/master/vectorf128.h#L1043
@@ -61,7 +61,7 @@ impl Vec4fBase {
 
 impl From<Underlying> for Vec4fBase {
     /// Wraps given `value` into [`Vec8f`].
-    #[inline(always)]
+    #[inline]
     fn from(value: Underlying) -> Self {
         Self(value)
     }
@@ -69,14 +69,14 @@ impl From<Underlying> for Vec4fBase {
 
 impl From<Vec4fBase> for Underlying {
     /// Unwraps given vector into raw [`__m256`] value.
-    #[inline(always)]
+    #[inline]
     fn from(value: Vec4fBase) -> Self {
         value.0
     }
 }
 
 impl Default for Vec4fBase {
-    #[inline(always)]
+    #[inline]
     fn default() -> Self {
         unsafe { _mm_setzero_ps() }.into()
     }
@@ -91,7 +91,7 @@ impl Neg for Vec4fBase {
 }
 
 impl PartialEq for Vec4fBase {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         unsafe {
             let cmp_result = _mm_cmpeq_ps(self.0, other.0);
