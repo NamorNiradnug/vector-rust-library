@@ -18,10 +18,7 @@ mod intrinsics {
     pub use core::arch::x86::*;
 }
 
-#[cfg(any(sse, doc))]
 pub use vec4f::Vec4f;
-
-#[cfg(any(sse, doc))]
 pub use vec8f::Vec8f;
 
 pub use common::SIMDVector;
