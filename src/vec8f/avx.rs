@@ -1,89 +1,96 @@
-use crate::{intrinsics::*, macros::vecbase_impl_binary_op, Vec4f};
+use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op, vec4f::Vec4f};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-pub type Underlying = __m256;
+use super::Vec8fBase;
 
 #[repr(transparent)]
 #[derive(Clone, Copy)]
-pub struct Vec8fBase(Underlying);
+pub struct Vec8f(__m256);
 
-impl Vec8fBase {
+impl super::Vec8fBase for Vec8f {
     #[inline]
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
+    fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
         unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) }.into()
     }
 
     #[inline]
-    pub fn join(low: Vec4f, high: Vec4f) -> Self {
+    fn join(low: Vec4f, high: Vec4f) -> Self {
         unsafe { _mm256_set_m128(high.into(), low.into()) }.into()
     }
 
     #[inline]
-    pub fn broadcast(value: f32) -> Self {
-        unsafe { _mm256_set1_ps(value) }.into()
-    }
-
-    #[inline]
-    pub fn low(self) -> Vec4f {
+    fn low(self) -> Vec4f {
         unsafe { _mm256_castps256_ps128(self.0) }.into()
     }
 
     #[inline]
-    pub fn high(self) -> Vec4f {
+    fn high(self) -> Vec4f {
         unsafe { _mm256_extractf128_ps(self.0, 1) }.into()
     }
 
     #[inline]
-    pub unsafe fn load_ptr(addr: *const f32) -> Self {
-        _mm256_loadu_ps(addr).into()
-    }
-
-    #[inline]
-    pub unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
+    unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         _mm256_load_ps(addr).into()
     }
 
     #[inline]
-    pub unsafe fn store_ptr(self, addr: *mut f32) {
-        _mm256_storeu_ps(addr, self.0);
-    }
-
-    #[inline]
-    pub unsafe fn store_ptr_aligned(self, addr: *mut f32) {
+    unsafe fn store_ptr_aligned(self, addr: *mut f32) {
         _mm256_store_ps(addr, self.0);
     }
 
     #[inline]
-    pub unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
+    unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
         _mm256_stream_ps(addr, self.0)
     }
 }
 
-impl From<Underlying> for Vec8fBase {
+impl SIMDBase<8> for Vec8f {
+    type Underlying = __m256;
+    type Element = f32;
+
+    #[inline]
+    fn broadcast(value: f32) -> Self {
+        unsafe { _mm256_set1_ps(value) }.into()
+    }
+
+    #[inline]
+    unsafe fn load_ptr(addr: *const f32) -> Self {
+        _mm256_loadu_ps(addr).into()
+    }
+
+    unsafe fn store_ptr(self, addr: *mut Self::Element) {
+        _mm256_storeu_ps(addr, self.0);
+    }
+
+    fn sum(self) -> Self::Element {
+        (self.low() + self.high()).sum()
+    }
+}
+
+impl From<__m256> for Vec8f {
     /// Wraps given `value` into [`Vec8f`].
     #[inline]
-    fn from(value: Underlying) -> Self {
+    fn from(value: __m256) -> Self {
         Self(value)
     }
 }
 
-impl From<Vec8fBase> for Underlying {
+impl From<Vec8f> for __m256 {
     /// Unwraps given vector into raw [`__m256`] value.
     #[inline]
-    fn from(value: Vec8fBase) -> Self {
+    fn from(value: Vec8f) -> Self {
         value.0
     }
 }
 
-impl Default for Vec8fBase {
+impl Default for Vec8f {
     #[inline]
     fn default() -> Self {
         unsafe { _mm256_setzero_ps() }.into()
     }
 }
 
-impl Neg for Vec8fBase {
+impl Neg for Vec8f {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
@@ -91,7 +98,7 @@ impl Neg for Vec8fBase {
     }
 }
 
-impl PartialEq for Vec8fBase {
+impl PartialEq for Vec8f {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         unsafe {
@@ -101,22 +108,7 @@ impl PartialEq for Vec8fBase {
     }
 }
 
-vecbase_impl_binary_op!(Vec8fBase, Add, add, _mm256_add_ps);
-vecbase_impl_binary_op!(Vec8fBase, Sub, sub, _mm256_sub_ps);
-vecbase_impl_binary_op!(Vec8fBase, Mul, mul, _mm256_mul_ps);
-vecbase_impl_binary_op!(Vec8fBase, Div, div, _mm256_div_ps);
-
-// TODO: this should be in mod.rs
-use super::Vec8f;
-
-impl From<Underlying> for Vec8f {
-    fn from(value: Underlying) -> Self {
-        Self(Vec8fBase::from(value))
-    }
-}
-
-impl From<Vec8f> for Underlying {
-    fn from(value: Vec8f) -> Self {
-        value.0.into()
-    }
-}
+vec_impl_binary_op!(Vec8f, Add, add, _mm256_add_ps);
+vec_impl_binary_op!(Vec8f, Sub, sub, _mm256_sub_ps);
+vec_impl_binary_op!(Vec8f, Mul, mul, _mm256_mul_ps);
+vec_impl_binary_op!(Vec8f, Div, div, _mm256_div_ps);
