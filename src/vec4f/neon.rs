@@ -16,24 +16,29 @@ impl SIMDBase<4> for Vec4f {
     type Underlying = float32x4_t;
     type Element = f32;
 
+    #[inline]
     fn broadcast(value: Self::Element) -> Self {
         unsafe { vdupq_n_f32(value) }.into()
     }
 
+    #[inline]
     unsafe fn load_ptr(addr: *const Self::Element) -> Self {
         vld1q_f32(addr).into()
     }
 
+    #[inline]
     unsafe fn store_ptr(self, addr: *mut Self::Element) {
         vst1q_f32(addr, self.0)
     }
 
+    #[inline]
     fn sum(self) -> Self::Element {
         unsafe { vaddvq_f32(self.0) }
     }
 }
 
 impl Vec4fBase for Vec4f {
+    #[inline]
     fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
         unsafe { Self::load_ptr([v0, v1, v2, v3].as_ptr()) }
     }
