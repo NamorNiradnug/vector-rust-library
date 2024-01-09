@@ -8,6 +8,6 @@ fn main() {
         no_sse41: { not(sse41) },
         avx: { target_feature = "avx" },
         no_avx: { not(avx) },
-        neon: {  target_feature = "neon" }
+        neon: {  target_feature = "neon" },
     }
 }
