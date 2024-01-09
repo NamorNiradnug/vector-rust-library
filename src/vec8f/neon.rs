@@ -38,16 +38,16 @@ impl Vec8fBase for Vec8f {
         [v0, v1, v2, v3, v4, v5, v6, v7].into()
     }
 
-    fn join(a: prelude::Vec4f, b: prelude::Vec4f) -> Self {
+    fn join(a: Vec4f, b: Vec4f) -> Self {
         float32x4x2_t(a.into(), b.into()).into()
     }
 
-    fn low(self) -> prelude::Vec4f {
-        self.0.0.into()
+    fn low(self) -> Vec4f {
+        self.0 .0.into()
     }
 
-    fn high(self) -> prelude::Vec4f {
-        self.0.1.into()
+    fn high(self) -> Vec4f {
+        self.0 .1.into()
     }
 }
 
