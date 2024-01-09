@@ -4,7 +4,7 @@ use super::Vec8fBase;
 use crate::{
     intrinsics::*,
     macros::vec_impl_broadcast_default,
-    prelude::{self, SIMDBase, Vec4f},
+    prelude::{SIMDBase, Vec4f},
 };
 use derive_more::{From, Into};
 
