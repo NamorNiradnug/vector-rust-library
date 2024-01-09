@@ -30,14 +30,16 @@ where
     /// ```
     ///
     /// # Note
-    /// Prefer using [`default`](Default::default) instead of `broadcast`-ing zero.
+    /// Prefer using [`default`](Default::default) instead of [`broadcast`]-ing zero.
+    ///
+    /// [`broadcast`]: SIMDBase::broadcast
     fn broadcast(value: Self::Element) -> Self;
 
     /// Loads vector from an array pointed by `addr`.
     /// `addr` is not required to be aligned.
     ///
     /// # Safety
-    /// `addr` must be a valid pointer to an [`N`](Self::Elements)-sized array.
+    /// `addr` must be a valid pointer to an [`N`](Self::N)-sized array.
     ///
     /// # Example
     /// ```
@@ -83,6 +85,8 @@ where
     /// # use vrl::prelude::*;
     /// Vec4f::load_checked(&[1.0, 2.0, 3.0, 4.0, 5.0]);
     /// ```
+    ///
+    /// [`N`]: Self::N
     #[inline]
     fn load_checked(data: &[Self::Element]) -> Self {
         if data.len() != Self::N {
@@ -109,6 +113,8 @@ where
     /// # use vrl::prelude::*;
     /// Vec4f::load_prefix(&[1.0, 2.0, 3.0]);
     /// ```
+    ///
+    /// [`N`]: Self::N
     #[inline]
     fn load_prefix(data: &[Self::Element]) -> Self {
         if data.len() < Self::N {
@@ -151,6 +157,8 @@ where
     /// let mut data = [-1.0; 5];
     /// Vec4f::default().store_checked(&mut data);
     /// ```
+    ///
+    /// [`N`]: Self::N
     #[inline]
     fn store_checked(self, slice: &mut [Self::Element]) {
         if slice.len() != Self::N {
@@ -162,7 +170,7 @@ where
     /// Stores elements of the vector into prefix of `slice`.
     ///
     /// # Panics
-    /// Panics if `slice.len()` is less than [`N`].
+    /// Panics if `slice.len()` is less than [`N`](Self::N).
     ///
     /// # Exmaples
     /// ```
@@ -188,7 +196,7 @@ where
     /// element.
     ///
     /// # Panic
-    /// Panics if `index` is invalid, i.e. isn't less than [`N`].
+    /// Panics if `index` is invalid, i.e. isn't less than [`N`](Self::N).
     ///
     /// # Examples
     /// ```
@@ -260,8 +268,6 @@ where
     /// # use vrl::prelude::*;
     /// assert_eq!(Vec4f::new(1.0, 2.0, 3.0, 4.0).sum(), 10.0);
     /// ```
-    // XXX: should it have a default implementation (store elements into
-    // array and sum them up in a loop)
     fn sum(self) -> Self::Element;
 }
 

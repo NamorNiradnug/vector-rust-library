@@ -58,10 +58,12 @@ impl SIMDBase<8> for Vec8f {
         _mm256_loadu_ps(addr).into()
     }
 
+    #[inline]
     unsafe fn store_ptr(self, addr: *mut Self::Element) {
         _mm256_storeu_ps(addr, self.0);
     }
 
+    #[inline]
     fn sum(self) -> Self::Element {
         (self.low() + self.high()).sum()
     }
@@ -93,6 +95,7 @@ impl Default for Vec8f {
 impl Neg for Vec8f {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         unsafe { _mm256_xor_ps(self.0, _mm256_set1_ps(-0.0)) }.into()
     }

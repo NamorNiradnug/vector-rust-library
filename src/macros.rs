@@ -45,12 +45,14 @@ macro_rules! vec_overload_operator {
 macro_rules! vec_impl_sum_prod {
     ($vectype: ty) => {
         impl std::iter::Sum for $vectype {
+            #[inline]
             fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
                 iter.fold(<$vectype>::default(), |a, b| a + b)
             }
         }
 
         impl std::iter::Product for $vectype {
+            #[inline]
             fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
                 iter.fold(<$vectype>::default(), |a, b| a * b)
             }
@@ -135,6 +137,7 @@ macro_rules! vec_impl_generic_traits {
 macro_rules! vec_impl_partial_load {
     ($vectype: ty, $eltype: ty, 4) => {
         impl crate::common::SIMDPartialLoad<$eltype> for $vectype {
+            #[inline]
             fn load_partial(data: &[$eltype]) -> Self {
                 match data.len() {
                     4.. => unsafe { Self::load_ptr(data.as_ptr()) },

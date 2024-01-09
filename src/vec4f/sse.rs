@@ -128,6 +128,7 @@ impl Default for Vec4f {
 impl Neg for Vec4f {
     type Output = Self;
 
+    #[inline]
     fn neg(self) -> Self::Output {
         unsafe { _mm_xor_ps(self.0, _mm_set1_ps(-0.0)) }.into()
     }

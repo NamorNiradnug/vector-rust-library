@@ -9,6 +9,7 @@ use crate::{
         vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store, vec_impl_sum_prod,
         vec_overload_operator,
     },
+    prelude::SIMDVector,
     vec4f::Vec4f,
 };
 
@@ -59,7 +60,7 @@ pub trait Vec8fBase: SIMDBase<8> + Copy + Clone {
     /// Like [`load_ptr`], requires `addr` to be valid.
     /// Unlike [`load_ptr`], requires `addr` to be divisible by `32`, i.e. to be a `32`-bytes aligned address.
     ///
-    /// [`load_ptr`]: Self::load_ptr
+    /// [`load_ptr`]: SIMDBase::load_ptr
     ///
     /// # Examples
     /// ```
@@ -87,7 +88,7 @@ pub trait Vec8fBase: SIMDBase<8> + Copy + Clone {
     /// Like [`store_ptr`], requires `addr` to be valid.
     /// Unlike [`store_ptr`], requires `addr` to be divisible by `32`, i.e. to be a 32-bytes aligned address.
     ///
-    /// [`store_ptr`]: Self::store_ptr
+    /// [`store_ptr`]: SIMDBase::store_ptr
     #[cfg(target_feature = "sse")]
     unsafe fn store_ptr_aligned(self, addr: *mut f32);
 
@@ -161,6 +162,8 @@ impl From<Vec8f> for (Vec4f, Vec4f) {
 vec_impl_generic_traits!(Vec8f, f32, 8);
 vec_impl_partial_load!(Vec8f, f32, Vec4f, 8);
 vec_impl_partial_store!(Vec8f, f32, 8);
+
+impl SIMDVector<8> for Vec8f {}
 
 #[cfg(test)]
 mod tests {
