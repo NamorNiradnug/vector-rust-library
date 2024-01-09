@@ -18,7 +18,10 @@ mod intrinsics {
     pub use core::arch::x86::*;
 }
 
-pub use vec4f::Vec4f;
-pub use vec8f::Vec8f;
-
-pub use common::SIMDVector;
+pub mod prelude {
+    pub use super::{
+        common::{SIMDBase, SIMDPartialLoad, SIMDPartialStore, SIMDVector},
+        vec4f::{Vec4f, Vec4fBase},
+        vec8f::{Vec8f, Vec8fBase},
+    };
+}
