@@ -25,6 +25,7 @@ impl Vec8fBase for Vec8f {
     }
 
     #[inline]
+    #[cfg(sse)]
     unsafe fn load_ptr_aligned(addr: *const f32) -> Self {
         (
             Vec4f::load_ptr_aligned(addr),
@@ -34,12 +35,14 @@ impl Vec8fBase for Vec8f {
     }
 
     #[inline]
+    #[cfg(sse)]
     unsafe fn store_ptr_aligned(self, addr: *mut f32) {
         self.0.store_ptr_aligned(addr);
         self.1.store_ptr_aligned(addr.add(4));
     }
 
     #[inline]
+    #[cfg(sse)]
     unsafe fn store_ptr_non_temporal(self, addr: *mut f32) {
         self.0.store_ptr_non_temporal(addr);
         self.1.store_ptr_non_temporal(addr.add(4));
