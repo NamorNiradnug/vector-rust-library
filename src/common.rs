@@ -310,8 +310,20 @@ pub trait SIMDPartialStore<T> {
     fn store_partial(&self, slice: &mut [T]);
 }
 
-pub trait Arithmetic<Rhs = Self>: Add<Rhs> + Sub<Rhs> + Mul<Rhs> + Div<Rhs> + Neg {}
-impl<T, Rhs> Arithmetic<Rhs> for T where T: Add<Rhs> + Sub<Rhs> + Mul<Rhs> + Div<Rhs> + Neg {}
+pub trait Arithmetic<Rhs = Self, Output = Self>:
+    Add<Rhs, Output = Output>
+    + Sub<Rhs, Output = Output>
+    + Mul<Rhs, Output = Output>
+    + Div<Rhs, Output = Output>
+{
+}
+impl<T, Rhs, Output> Arithmetic<Rhs, Output> for T where
+    T: Add<Rhs, Output = Output>
+        + Sub<Rhs, Output = Output>
+        + Mul<Rhs, Output = Output>
+        + Div<Rhs, Output = Output>
+{
+}
 
 pub trait ArithmeticAssign<Rhs = Self>:
     AddAssign<Rhs> + SubAssign<Rhs> + MulAssign<Rhs> + DivAssign<Rhs>
@@ -358,9 +370,11 @@ impl<T, Rhs> ArithmeticAssign<Rhs> for T where
 /// [`index`]: Index::index
 pub trait SIMDVector<const N: usize>:
     SIMDBase<N>
-    + Arithmetic<Self>
+    + Neg
+    + Arithmetic
     + ArithmeticAssign<Self>
     + Arithmetic<Self::Element>
+    + ArithmeticAssign<Self::Element>
     + PartialEq
     + Into<Self::Underlying>
     + Into<[Self::Element; N]>
@@ -377,7 +391,7 @@ pub trait SIMDVector<const N: usize>:
     + Product
 where
     [Self::Element; N]: Into<Self>,
-    Self::Element: Arithmetic<Self>,
+    Self::Element: Arithmetic<Self, Self>,
     Self::Underlying: Into<Self>,
 {
 }
