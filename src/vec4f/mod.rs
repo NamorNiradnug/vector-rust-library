@@ -8,11 +8,14 @@ use crate::{common::*, macros::*};
 cfg_if::cfg_if! {
     if #[cfg(sse)] {
         mod sse;
-        pub use sse::*;
+        pub use sse::Vec4f;
+    } else if #[cfg(neon)] {
+        mod neon;
+        pub use neon::Vec4f;
     } else {
         compile_error!("Currently SSE is required for Vec4f");
         mod fallback;
-        pub use fallback::*;
+        pub use fallback::Vec4f;
     }
 }
 
