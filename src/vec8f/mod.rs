@@ -23,6 +23,7 @@ cfg_if::cfg_if! {
     }
 }
 
+/// Base trait for [`Vec8f`].
 pub trait Vec8fBase: SIMDBase<8> + Copy + Clone {
     /// Initializes elements of returned vector with given values.
     ///

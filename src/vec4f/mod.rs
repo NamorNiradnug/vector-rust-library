@@ -16,6 +16,7 @@ cfg_if::cfg_if! {
     }
 }
 
+/// Base trait for [`Vec4f`].
 pub trait Vec4fBase: SIMDBase<4> {
     /// Initializes elements of returned vector with given values.
     ///

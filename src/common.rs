@@ -4,6 +4,7 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
+/// Base trait for fixed-size vector types.
 pub trait SIMDBase<const N: usize>
 where
     Self: Into<Self::Underlying> + From<Self::Underlying>,
