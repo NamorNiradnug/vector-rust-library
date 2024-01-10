@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
-use std::fmt::Debug;
 use paste::paste;
+use std::fmt::Debug;
 use vrl::prelude::*;
 
 fn iota_array<T: From<i16> + Copy, const N: usize>() -> [T; N] {
