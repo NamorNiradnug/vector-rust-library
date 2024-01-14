@@ -13,7 +13,7 @@ cfg_if::cfg_if! {
         mod neon;
         pub use neon::Vec4f;
     } else {
-        compile_error!("Currently SSE is required for Vec4f");
+        compile_error!("Currently SSE or NEON is required for Vec4f");
         mod fallback;
         pub use fallback::Vec4f;
     }
