@@ -1,0 +1,4 @@
+language: rust
+
+arch: arm64
+os: linux
