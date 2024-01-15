@@ -1,10 +1,11 @@
 use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op, vec4f::Vec4f};
+use derive_more::{From, Into};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use super::Vec8fBase;
 
 #[repr(transparent)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, From, Into)]
 pub struct Vec8f(__m256);
 
 impl super::Vec8fBase for Vec8f {
@@ -71,22 +72,6 @@ impl SIMDBase<8> for Vec8f {
     #[inline]
     fn sum(self) -> Self::Element {
         (self.low() + self.high()).sum()
-    }
-}
-
-impl From<__m256> for Vec8f {
-    /// Wraps given `value` into [`Vec8f`].
-    #[inline]
-    fn from(value: __m256) -> Self {
-        Self(value)
-    }
-}
-
-impl From<Vec8f> for __m256 {
-    /// Unwraps given vector into raw [`__m256`] value.
-    #[inline]
-    fn from(value: Vec8f) -> Self {
-        value.0
     }
 }
 

@@ -1,3 +1,16 @@
+#[allow(unused_macros)]
+macro_rules! vec_impl_unary_op {
+    ($vectype: ty, $op_trait: tt, $op_name: tt, $intrinsic: tt) => {
+        impl $op_trait for $vectype {
+            type Output = Self;
+            #[inline]
+            fn $op_name(self) -> Self::Output {
+                unsafe { $intrinsic(self.into()).into() }
+            }
+        }
+    };
+}
+
 macro_rules! vec_impl_binary_op {
     ($vectype: ty, $op_trait: tt, $op_name: tt, $intrinsic: tt) => {
         impl $op_trait for $vectype {
@@ -216,7 +229,20 @@ macro_rules! vec_impl_partial_store {
     };
 }
 
+#[allow(unused_macros)]
+macro_rules! vec_impl_broadcast_default {
+    ($vectype: ty, $zero: literal) => {
+        impl Default for $vectype {
+            #[inline]
+            fn default() -> Self {
+                Self::broadcast($zero)
+            }
+        }
+    };
+}
+
+#[allow(unused_imports)]
 pub(crate) use {
-    vec_impl_binary_op, vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store,
-    vec_impl_sum_prod, vec_overload_operator,
+    vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_generic_traits, vec_impl_partial_load,
+    vec_impl_partial_store, vec_impl_sum_prod, vec_impl_unary_op, vec_overload_operator,
 };

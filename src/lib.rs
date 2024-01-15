@@ -18,6 +18,9 @@ mod intrinsics {
 
     #[cfg(target_arch = "x86")]
     pub use core::arch::x86::*;
+
+    #[cfg(target_arch = "aarch64")]
+    pub use core::arch::aarch64::*;
 }
 
 pub mod prelude {

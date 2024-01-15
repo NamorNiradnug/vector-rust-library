@@ -1,8 +1,9 @@
 use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op};
+use derive_more::{From, Into};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 #[repr(transparent)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, From, Into)]
 pub struct Vec4f(__m128);
 
 impl Vec4f {
@@ -104,20 +105,6 @@ impl SIMDBase<4> for Vec4f {
             let t4 = _mm_add_ss(t2, t3);
             _mm_cvtss_f32(t4)
         }
-    }
-}
-
-impl From<__m128> for Vec4f {
-    #[inline]
-    fn from(value: __m128) -> Self {
-        Self(value)
-    }
-}
-
-impl From<Vec4f> for __m128 {
-    #[inline]
-    fn from(value: Vec4f) -> Self {
-        value.0
     }
 }
 
