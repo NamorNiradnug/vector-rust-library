@@ -4,6 +4,8 @@
 //! This is a library for using the SIMD (Single Instruction Multiple Data) instructions on modern
 //! x86 and x86-64 CPUs.
 
+#![warn(clippy::undocumented_unsafe_blocks)]
+
 mod common;
 mod macros;
 

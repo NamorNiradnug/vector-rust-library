@@ -10,21 +10,25 @@ pub struct Vec8f(__m256);
 impl super::Vec8fBase for Vec8f {
     #[inline]
     fn new(v0: f32, v1: f32, v2: f32, v3: f32, v4: f32, v5: f32, v6: f32, v7: f32) -> Self {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_setr_ps(v0, v1, v2, v3, v4, v5, v6, v7) }.into()
     }
 
     #[inline]
     fn join(low: Vec4f, high: Vec4f) -> Self {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_set_m128(high.into(), low.into()) }.into()
     }
 
     #[inline]
     fn low(self) -> Vec4f {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_castps256_ps128(self.0) }.into()
     }
 
     #[inline]
     fn high(self) -> Vec4f {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_extractf128_ps(self.0, 1) }.into()
     }
 
@@ -50,6 +54,7 @@ impl SIMDBase<8> for Vec8f {
 
     #[inline]
     fn broadcast(value: f32) -> Self {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_set1_ps(value) }.into()
     }
 
@@ -88,6 +93,7 @@ impl From<Vec8f> for __m256 {
 impl Default for Vec8f {
     #[inline]
     fn default() -> Self {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_setzero_ps() }.into()
     }
 }
@@ -97,6 +103,7 @@ impl Neg for Vec8f {
 
     #[inline]
     fn neg(self) -> Self::Output {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe { _mm256_xor_ps(self.0, _mm256_set1_ps(-0.0)) }.into()
     }
 }
@@ -104,6 +111,7 @@ impl Neg for Vec8f {
 impl PartialEq for Vec8f {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
+        // SAFETY: this file is only used on builds with avx feature
         unsafe {
             let cmp_result = _mm256_cmp_ps::<0>(self.0, other.0);
             _mm256_testz_ps(cmp_result, cmp_result) == 0
