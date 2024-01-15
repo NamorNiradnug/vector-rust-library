@@ -66,6 +66,7 @@ impl Neg for Vec8f {
 
     #[inline]
     fn neg(self) -> Self::Output {
+        // SAFETY: this file is only used on builds with NEON feature
         unsafe { float32x4x2_t(vnegq_f32(self.0 .0), vnegq_f32(self.0 .1)) }.into()
     }
 }
@@ -76,6 +77,7 @@ macro_rules! impl_binary_op {
             type Output = Self;
             #[inline]
             fn $op(self, other: Self) -> Self::Output {
+                // SAFETY: this file is only used on builds with NEON feature
                 unsafe {
                     float32x4x2_t(
                         $intrinsic(self.0 .0, other.0 .0),

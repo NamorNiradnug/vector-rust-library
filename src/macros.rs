@@ -5,6 +5,7 @@ macro_rules! vec_impl_unary_op {
             type Output = Self;
             #[inline]
             fn $op_name(self) -> Self::Output {
+                // SAFETY: the inrinsic won't compile on a platform it isn't available
                 unsafe { $intrinsic(self.into()).into() }
             }
         }
