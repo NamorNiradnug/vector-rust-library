@@ -17,6 +17,9 @@ cfg_if::cfg_if! {
     if #[cfg(avx)] {
         mod avx;
         pub use avx::Vec8f;
+    } else if #[cfg(neon)] {
+        mod neon;
+        pub use neon::Vec8f;
     } else {
         mod fallback;
         pub use fallback::Vec8f;
