@@ -1,8 +1,9 @@
 use derive_more::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
+    macros::vec_impl_fused_low_high,
     prelude::{SIMDBase, SIMDFusedCalc},
-    vec4f::{Vec4f, Vec4fBase}, macros::vec_impl_fused_low_high,
+    vec4f::{Vec4f, Vec4fBase},
 };
 
 use super::Vec8fBase;
