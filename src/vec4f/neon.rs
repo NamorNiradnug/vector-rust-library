@@ -4,7 +4,7 @@ use super::Vec4fBase;
 use crate::{
     intrinsics::*,
     macros::{vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_unary_op},
-    prelude::SIMDBase,
+    prelude::{SIMDBase, SIMDFusedCalc},
 };
 use derive_more::{From, Into};
 
@@ -55,5 +55,27 @@ impl PartialEq for Vec4f {
     #[inline]
     fn eq(&self, other: &Vec4f) -> bool {
         unsafe { vminvq_u32(vceqq_f32(self.0, other.0)) != 0 }
+    }
+}
+
+impl SIMDFusedCalc for Vec4f {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        unsafe { vfmaq_f32(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        unsafe { vfmsq_f32(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        -self.mul_sub(b, c)
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        -self.mul_add(b, c)
     }
 }

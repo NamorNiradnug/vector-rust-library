@@ -4,12 +4,11 @@ use std::{
 };
 
 use crate::{
-    common::SIMDBase,
+    common::{SIMDBase, SIMDVector},
     macros::{
         vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store, vec_impl_sum_prod,
         vec_overload_operator,
     },
-    prelude::SIMDVector,
     vec4f::Vec4f,
 };
 

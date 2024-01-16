@@ -310,6 +310,80 @@ pub trait SIMDPartialStore<T> {
     fn store_partial(&self, slice: &mut [T]);
 }
 
+pub trait SIMDFusedCalc {
+    /// Multiplies vector by `b` and adds `c` to the product.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.mul_add(b, c), a * b + c);
+    /// ```
+    fn mul_add(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` ans substracts `c` from the procuct.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.mul_sub(b, c), a * b - c);
+    /// ```
+    fn mul_sub(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` and substracts the product from `c`.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.nmul_add(b, c), c - a * b);
+    /// ```
+    fn nmul_add(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` and substracts the product from `-c`.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.nmul_sub(b, c), -(a * b + c));
+    /// ```
+    fn nmul_sub(self, b: Self, c: Self) -> Self;
+}
+
+pub(crate) trait SIMDFusedCalcFallback {}
+
+impl<T: SIMDFusedCalcFallback + Arithmetic + Neg<Output = Self>> SIMDFusedCalc for T {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        self * b + c
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        self * b - c
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        c - self * b
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        -(self * b + c)
+    }
+}
+
 pub trait Arithmetic<Rhs = Self, Output = Self>:
     Add<Rhs, Output = Output>
     + Sub<Rhs, Output = Output>
@@ -370,7 +444,7 @@ impl<T, Rhs> ArithmeticAssign<Rhs> for T where
 /// [`index`]: Index::index
 pub trait SIMDVector<const N: usize>:
     SIMDBase<N>
-    + Neg
+    + Neg<Output = Self>
     + Arithmetic
     + ArithmeticAssign<Self>
     + Arithmetic<Self::Element>
@@ -381,6 +455,7 @@ pub trait SIMDVector<const N: usize>:
     + for<'a> From<&'a [Self::Element; N]>
     + SIMDPartialLoad<Self::Element>
     + SIMDPartialStore<Self::Element>
+    + SIMDFusedCalc
     + Default
     + Copy
     + Clone

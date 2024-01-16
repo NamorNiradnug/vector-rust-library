@@ -213,6 +213,49 @@ macro_rules! vec_impl_partial_store {
 }
 
 #[allow(unused_macros)]
+macro_rules! vec_impl_fused_low_high {
+    ($vectype: ty) => {
+        impl SIMDFusedCalc for $vectype {
+            #[inline]
+            fn mul_add(self, b: Self, c: Self) -> Self {
+                (
+                    self.low().mul_add(b.low(), c.low()),
+                    self.high().mul_add(b.high(), c.high()),
+                )
+                    .into()
+            }
+
+            #[inline]
+            fn mul_sub(self, b: Self, c: Self) -> Self {
+                (
+                    self.low().mul_sub(b.low(), c.low()),
+                    self.high().mul_sub(b.high(), c.high()),
+                )
+                    .into()
+            }
+
+            #[inline]
+            fn nmul_add(self, b: Self, c: Self) -> Self {
+                (
+                    self.low().nmul_add(b.low(), c.low()),
+                    self.high().nmul_add(b.high(), c.high()),
+                )
+                    .into()
+            }
+
+            #[inline]
+            fn nmul_sub(self, b: Self, c: Self) -> Self {
+                (
+                    self.low().nmul_sub(b.low(), c.low()),
+                    self.high().nmul_sub(b.high(), c.high()),
+                )
+                    .into()
+            }
+        }
+    };
+}
+
+#[allow(unused_macros)]
 macro_rules! vec_impl_broadcast_default {
     ($vectype: ty, $zero: literal) => {
         impl Default for $vectype {
@@ -226,6 +269,7 @@ macro_rules! vec_impl_broadcast_default {
 
 #[allow(unused_imports)]
 pub(crate) use {
-    vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_generic_traits, vec_impl_partial_load,
-    vec_impl_partial_store, vec_impl_sum_prod, vec_impl_unary_op, vec_overload_operator,
+    vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_fused_low_high,
+    vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store, vec_impl_sum_prod,
+    vec_impl_unary_op, vec_overload_operator,
 };

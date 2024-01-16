@@ -131,6 +131,32 @@ impl PartialEq for Vec4f {
     }
 }
 
+#[cfg(target_feature = "fma")]
+impl crate::common::SIMDFusedCalc for Vec4f {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        unsafe { _mm_fmadd_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        unsafe { _mm_fmsub_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        unsafe { _mm_fnmadd_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        unsafe { _mm_fnmsub_ps(self.0, b.0, c.0) }.into()
+    }
+}
+
+#[cfg(not(target_feature = "fma"))]
+impl crate::common::SIMDFusedCalcFallback for Vec4f {}
+
 vec_impl_binary_op!(Vec4f, Add, add, _mm_add_ps);
 vec_impl_binary_op!(Vec4f, Sub, sub, _mm_sub_ps);
 vec_impl_binary_op!(Vec4f, Mul, mul, _mm_mul_ps);
