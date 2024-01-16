@@ -44,6 +44,20 @@ pub fn dotprod_vec8f_ptr(vec1: &[f32], vec2: &[f32]) -> f32 {
     sum.sum()
 }
 
+pub fn dotprod_vec8f_loop_fused(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
+    assert_eq!(vec1.len(), vec2.len());
+    let mut sum = Vec8f::default();
+    while vec1.len() >= Vec8f::N {
+        let (head1, tail1) = vec1.split_at(Vec8f::N);
+        let (head2, tail2) = vec2.split_at(Vec8f::N);
+        sum = Vec8f::load_checked(head1).mul_add(Vec8f::load_checked(head2), sum);
+        vec1 = tail1;
+        vec2 = tail2;
+    }
+    sum = Vec8f::load_partial(vec1).mul_add(Vec8f::load_partial(vec2), sum);
+    sum.sum()
+}
+
 pub fn generate_rand_vector(len: usize, range: Range<f32>, rand_gen: &mut SmallRng) -> Vec<f32> {
     let mut result = Vec::with_capacity(len);
     result.resize_with(len, || rand_gen.gen_range(range.clone()));
@@ -67,5 +81,6 @@ fn test_dotprod() {
         assert_ulps_eq!(dotprod_vec8f_chunks(vec1, vec2), expected);
         assert_ulps_eq!(dotprod_vec8f_loop(vec1, vec2), expected);
         assert_ulps_eq!(dotprod_vec8f_ptr(vec1, vec2), expected);
+        assert_ulps_eq!(dotprod_vec8f_loop_fused(vec1, vec2), expected);
     }
 }

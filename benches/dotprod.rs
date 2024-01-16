@@ -51,6 +51,11 @@ fn dotprod_bench(c: &mut Criterion) {
             &input,
             |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_ptr(vec1, vec2)),
         );
+        group.bench_with_input(
+            BenchmarkId::new("handwritten loop with fused add-mul", vec_len),
+            &input,
+            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_loop_fused(vec1, vec2)),
+        );
     }
     group.finish();
 }
