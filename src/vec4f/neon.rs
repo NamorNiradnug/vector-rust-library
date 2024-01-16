@@ -61,17 +61,17 @@ impl PartialEq for Vec4f {
 impl SIMDFusedCalc for Vec4f {
     #[inline]
     fn mul_add(self, b: Self, c: Self) -> Self {
-        unsafe { vfmaq_f32(self.0, b.0, c.0) }.into()
+        unsafe { vfmaq_f32(c.0, b.0, self.0) }.into()
     }
 
     #[inline]
     fn mul_sub(self, b: Self, c: Self) -> Self {
-        unsafe { vfmsq_f32(self.0, b.0, c.0) }.into()
+        -self.nmul_add(b, c)
     }
 
     #[inline]
     fn nmul_add(self, b: Self, c: Self) -> Self {
-        -self.mul_sub(b, c)
+        unsafe { vfmsq_f32(c.0, b.0, self.0) }.into()
     }
 
     #[inline]
