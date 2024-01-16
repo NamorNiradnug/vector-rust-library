@@ -3,7 +3,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use super::Vec8fBase;
 use crate::{
     intrinsics::*,
-    macros::vec_impl_broadcast_default,
+    macros::{vec_impl_broadcast_default, vec_impl_fused_low_high},
     prelude::{SIMDBase, SIMDFusedCalc, Vec4f},
 };
 use derive_more::{From, Into};
