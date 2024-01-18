@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::Vec4fBase;
+use super::{SIMDRound, Vec4fBase};
 use crate::{
     intrinsics::*,
     macros::{vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_unary_op},
@@ -77,5 +77,11 @@ impl SIMDFusedCalc for Vec4f {
     #[inline]
     fn nmul_sub(self, b: Self, c: Self) -> Self {
         -self.mul_add(b, c)
+    }
+}
+
+impl SIMDRound for Vec4f {
+    fn round(self) -> Self {
+        unsafe { vcvtq_f32_s32(vcvtaq_s32_f32(self.0)) }.into()
     }
 }
