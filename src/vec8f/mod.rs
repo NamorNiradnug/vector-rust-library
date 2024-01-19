@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    common::{SIMDBase, SIMDVector},
+    common::{SIMDBase, SIMDRound, SIMDVector},
     macros::{
         vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store, vec_impl_sum_prod,
         vec_overload_operator,
@@ -26,7 +26,7 @@ cfg_if::cfg_if! {
 }
 
 /// Base trait for [`Vec8f`].
-pub trait Vec8fBase: SIMDBase<8> + Copy + Clone {
+pub trait Vec8fBase: SIMDBase<8> + SIMDRound + Copy + Clone {
     /// Initializes elements of returned vector with given values.
     ///
     /// # Example

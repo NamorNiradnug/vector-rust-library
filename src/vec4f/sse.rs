@@ -1,6 +1,9 @@
 use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op};
+use cfg_if::cfg_if;
 use derive_more::{From, Into};
 use std::ops::{Add, Div, Mul, Neg, Sub};
+
+use super::SIMDRound;
 
 #[repr(transparent)]
 #[derive(Clone, Copy, From, Into)]
@@ -156,6 +159,26 @@ impl crate::common::SIMDFusedCalc for Vec4f {
 
 #[cfg(not(target_feature = "fma"))]
 impl crate::common::SIMDFusedCalcFallback for Vec4f {}
+
+impl SIMDRound for Vec4f {
+    fn round(self) -> Self {
+        cfg_if! {
+            if #[cfg(sse41)] {
+                unsafe {
+                    _mm_round_ps(self.0, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
+                }.into()
+            } else if #[cfg(target_feature = "sse2")] {
+                unsafe {
+                    // TODO: handle overflow
+                    // XXX: should it preserve signed zero?
+                    _mm_cvtepi32_ps(_mm_cvtps_epi32(self.0))
+                }.into()
+            } else {
+                compile_error!("SSE2 or higher is required")
+            }
+        }
+    }
+}
 
 vec_impl_binary_op!(Vec4f, Add, add, _mm_add_ps);
 vec_impl_binary_op!(Vec4f, Sub, sub, _mm_sub_ps);

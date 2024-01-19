@@ -1,4 +1,4 @@
-use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op, vec4f::Vec4f};
+use crate::{common::*, intrinsics::*, macros::*, vec4f::Vec4f};
 use derive_more::{From, Into};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -126,3 +126,9 @@ vec_impl_binary_op!(Vec8f, Add, add, _mm256_add_ps);
 vec_impl_binary_op!(Vec8f, Sub, sub, _mm256_sub_ps);
 vec_impl_binary_op!(Vec8f, Mul, mul, _mm256_mul_ps);
 vec_impl_binary_op!(Vec8f, Div, div, _mm256_div_ps);
+
+impl SIMDRound for Vec8f {
+    fn round(self) -> Self {
+        unsafe { _mm256_round_ps(self.0, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC) }.into()
+    }
+}

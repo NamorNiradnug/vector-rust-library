@@ -20,7 +20,7 @@ cfg_if::cfg_if! {
 }
 
 /// Base trait for [`Vec4f`].
-pub trait Vec4fBase: SIMDBase<4> {
+pub trait Vec4fBase: SIMDBase<4> + SIMDRound {
     /// Initializes elements of returned vector with given values.
     ///
     /// # Example

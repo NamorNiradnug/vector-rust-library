@@ -384,6 +384,18 @@ impl<T: SIMDFusedCalcFallback + Arithmetic + Neg<Output = Self>> SIMDFusedCalc f
     }
 }
 
+pub trait SIMDRound {
+    /// Rounds values of the vector to the nearest integers.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let vec = Vec4f::new(1.3, -3.7, 0.7, -0.3);
+    /// assert_eq!(vec.round(), Vec4f::new(1.0, -4.0, 1.0, 0.0));
+    /// ```
+    fn round(self) -> Self;
+}
+
 pub trait Arithmetic<Rhs = Self, Output = Self>:
     Add<Rhs, Output = Output>
     + Sub<Rhs, Output = Output>

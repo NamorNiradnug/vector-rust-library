@@ -256,6 +256,17 @@ macro_rules! vec_impl_fused_low_high {
 }
 
 #[allow(unused_macros)]
+macro_rules! vec_impl_round_low_high {
+    ($vectype: ty) => {
+        impl crate::common::SIMDRound for $vectype {
+            fn round(self) -> Self {
+                (self.low().round(), self.high().round()).into()
+            }
+        }
+    };
+}
+
+#[allow(unused_macros)]
 macro_rules! vec_impl_broadcast_default {
     ($vectype: ty, $zero: literal) => {
         impl Default for $vectype {
@@ -270,6 +281,6 @@ macro_rules! vec_impl_broadcast_default {
 #[allow(unused_imports)]
 pub(crate) use {
     vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_fused_low_high,
-    vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store, vec_impl_sum_prod,
-    vec_impl_unary_op, vec_overload_operator,
+    vec_impl_generic_traits, vec_impl_partial_load, vec_impl_partial_store,
+    vec_impl_round_low_high, vec_impl_sum_prod, vec_impl_unary_op, vec_overload_operator,
 };

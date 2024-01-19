@@ -1,7 +1,7 @@
 use derive_more::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
-    macros::vec_impl_fused_low_high,
+    macros::*,
     prelude::{SIMDBase, SIMDFusedCalc},
     vec4f::{Vec4f, Vec4fBase},
 };
@@ -88,3 +88,4 @@ impl SIMDBase<8> for Vec8f {
 }
 
 vec_impl_fused_low_high!(Vec8f);
+vec_impl_round_low_high!(Vec8f);
