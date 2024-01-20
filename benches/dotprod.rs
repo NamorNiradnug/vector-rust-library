@@ -46,7 +46,10 @@ fn dotprod_bench(c: &mut Criterion) {
         bench_dotprod!(dotprod_vec8f_chunks, "using chunks iterator");
         bench_dotprod!(dotprod_vec8f_loop, "handwritten loop");
         bench_dotprod!(dotprod_vec8f_ptr, "handwritten loop with raw pointers");
-        bench_dotprod!(dotprod_vec8f_loop_fused, "handwritten loop with fused add-mul");
+        bench_dotprod!(
+            dotprod_vec8f_loop_fused,
+            "handwritten loop with fused add-mul"
+        );
     }
     group.finish();
 }
