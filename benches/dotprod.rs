@@ -31,31 +31,22 @@ fn dotprod_bench(c: &mut Criterion) {
         let input = (vec1.as_slice(), vec2.as_slice());
 
         group.throughput(Throughput::Elements(vec_len as u64));
-        group.bench_with_input(
-            BenchmarkId::new("no SIMD", vec_len),
-            &input,
-            |b, (vec1, vec2)| b.iter(|| dotprod_simple(vec1, vec2)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("using chunks iterator", vec_len),
-            &input,
-            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_chunks(vec1, vec2)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("handwritten loop", vec_len),
-            &input,
-            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_loop(vec1, vec2)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("handwritten loop with raw pointers", vec_len),
-            &input,
-            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_ptr(vec1, vec2)),
-        );
-        group.bench_with_input(
-            BenchmarkId::new("handwritten loop with fused add-mul", vec_len),
-            &input,
-            |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_loop_fused(vec1, vec2)),
-        );
+
+        macro_rules! bench_dotprod {
+            ($dotprod_fn: tt, $name: literal) => {
+                group.bench_with_input(
+                    BenchmarkId::new($name, vec_len),
+                    &input,
+                    |b, (vec1, vec2)| b.iter(|| $dotprod_fn(vec1, vec2)),
+                );
+            };
+        }
+
+        bench_dotprod!(dotprod_simple, "no SIMD");
+        bench_dotprod!(dotprod_vec8f_chunks, "using chunks iterator");
+        bench_dotprod!(dotprod_vec8f_loop, "handwritten loop");
+        bench_dotprod!(dotprod_vec8f_ptr, "handwritten loop with raw pointers");
+        bench_dotprod!(dotprod_vec8f_loop_fused, "handwritten loop with fused add-mul");
     }
     group.finish();
 }
