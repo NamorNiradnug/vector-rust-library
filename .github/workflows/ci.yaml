@@ -91,7 +91,7 @@ jobs:
         with:
           use-cross: true
           command: clippy
-          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile
+          args: --target i686-unknown-linux-gnu -Zdoctest-xcompile -- -D warnings
         env:
           RUSTFLAGS: -C target-feature=-sse4.1,-sse4.2,-avx,-avx2
       - uses: Swatinem/rust-cache@v2
