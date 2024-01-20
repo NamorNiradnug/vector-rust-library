@@ -5,6 +5,7 @@ macro_rules! vec_impl_unary_op {
             type Output = Self;
             #[inline]
             fn $op_name(self) -> Self::Output {
+                // SAFETY: `cfg_if!` should guarantee the intrinsic is available.
                 unsafe { $intrinsic(self.into()).into() }
             }
         }
@@ -17,6 +18,7 @@ macro_rules! vec_impl_binary_op {
             type Output = Self;
             #[inline]
             fn $op_name(self, rhs: Self) -> Self::Output {
+                // SAFETY: `cfg_if!` should guarantee the intrinsic is available.
                 unsafe { $intrinsic(self.into(), rhs.into()).into() }
             }
         }
@@ -100,6 +102,10 @@ macro_rules! vec_impl_generic_traits {
             #[inline]
             fn from(value: $vectype) -> Self {
                 let mut result = MaybeUninit::<Self>::uninit();
+                // SAFETY: currently all the supported platforms (x86 and NEON) store
+                // SIMD types as a packed array of `f32`/`f64`/etc
+                // Also the underlying intrinsic types are aligned enough
+                // Hence the pointer casting is valid
                 unsafe {
                     value.store_ptr(result.as_mut_ptr() as *mut $eltype);
                     result.assume_init()
@@ -110,6 +116,7 @@ macro_rules! vec_impl_generic_traits {
         impl From<&$vectype> for [$eltype; $N] {
             #[inline]
             fn from(value: &$vectype) -> Self {
+                // SAFETY: see safety comment for `impl From<vectype> for [eltype; N]` above
                 unsafe { std::mem::transmute_copy(value) }
             }
         }
@@ -131,6 +138,7 @@ macro_rules! vec_impl_generic_traits {
                 if index >= Self::N {
                     panic!("invalid index");
                 }
+                // SAFETY: on both x86 and NEON intrinsic types are stored as an array of several values
                 unsafe { &*(self as *const Self as *const $eltype).add(index) }
             }
         }
@@ -141,6 +149,7 @@ macro_rules! vec_impl_generic_traits {
                 if index >= Self::N {
                     panic!("invalid index");
                 }
+                // SAFETY: on both x86 and NEON intrinsic types are stored as an array of several values
                 unsafe { &mut *(self as *mut Self as *mut $eltype).add(index) }
             }
         }
@@ -153,6 +162,7 @@ macro_rules! vec_impl_partial_load {
             #[inline]
             fn load_partial(data: &[$eltype]) -> Self {
                 match data.len() {
+                    // SAFETY: if data.len() is at least 4 hence it's safe to simply load the prefix
                     4.. => unsafe { Self::load_ptr(data.as_ptr()) },
                     3 => Self::new(data[0], data[1], data[2], 0 as $eltype),
                     2 => Self::new(data[0], data[1], 0 as $eltype, 0 as $eltype),
@@ -168,8 +178,11 @@ macro_rules! vec_impl_partial_load {
             #[inline]
             fn load_partial(data: &[$eltype]) -> Self {
                 match data.len() {
+                    // SAFETY: if data.len() is at least 8 hence it's safe to simply load the prefix
                     8.. => unsafe { Self::load_ptr(data.as_ptr()) },
                     4.. => Self::join(
+                        // SAFETY: data.len() is at least 4 hence it's safe to load the first 4
+                        // element into vector type of size 4.
                         unsafe { <$halfvectype>::load_ptr(data.as_ptr()) },
                         <$halfvectype>::load_partial(data.split_at(4).1),
                     ),
@@ -189,6 +202,7 @@ macro_rules! vec_impl_partial_store {
             #[inline]
             fn store_partial(&self, slice: &mut [$eltype]) {
                 match slice.len() {
+                    // SAFETY: slice.len() is at least 4 hence it's valid to write the vector into the prefix
                     4.. => unsafe { self.store_ptr(slice.as_mut_ptr()) },
                     _ => slice.copy_from_slice(&<[$eltype; 4]>::from(self)[..slice.len()]),
                 }
@@ -200,8 +214,11 @@ macro_rules! vec_impl_partial_store {
             #[inline]
             fn store_partial(&self, slice: &mut [$eltype]) {
                 match slice.len() {
+                    // SAFETY: slice.len() is at least 8 hence it's valid to write the vector into the prefix
                     8.. => unsafe { self.store_ptr(slice.as_mut_ptr()) },
                     4.. => {
+                        // SAFETY: slice.len() is at least 4 hence it's valid to write the first 4
+                        // elements of the vector into the slice's prefix
                         unsafe { self.low().store_ptr(slice.as_mut_ptr()) };
                         self.high().store_partial(slice.split_at_mut(4).1)
                     }
