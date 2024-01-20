@@ -67,7 +67,7 @@ impl Vec4f {
 impl super::Vec4fBase for Vec4f {
     #[inline]
     fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { _mm_setr_ps(v0, v1, v2, v3) }.into()
     }
 }
@@ -78,7 +78,7 @@ impl SIMDBase<4> for Vec4f {
 
     #[inline]
     fn broadcast(value: f32) -> Self {
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { _mm_set1_ps(value) }.into()
     }
 
@@ -97,7 +97,7 @@ impl SIMDBase<4> for Vec4f {
         // According to Agner Fog, using `hadd` is inefficient.
         // src: https://github.com/vectorclass/version2/blob/master/vectorf128.h#L1043
         // TODO: benchmark this implementation and `hadd`-based one
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe {
             let t1 = _mm_movehl_ps(self.0, self.0);
             let t2 = _mm_add_ps(self.0, t1);
@@ -111,7 +111,7 @@ impl SIMDBase<4> for Vec4f {
 impl Default for Vec4f {
     #[inline]
     fn default() -> Self {
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { _mm_setzero_ps() }.into()
     }
 }
@@ -121,7 +121,7 @@ impl Neg for Vec4f {
 
     #[inline]
     fn neg(self) -> Self::Output {
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { _mm_xor_ps(self.0, _mm_set1_ps(-0.0)) }.into()
     }
 }
@@ -129,7 +129,7 @@ impl Neg for Vec4f {
 impl PartialEq for Vec4f {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        // SAFETY: this file is only used on builds with sse feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe {
             let cmp_result = _mm_cmpeq_ps(self.0, other.0);
             _mm_movemask_ps(cmp_result) == 0x0F

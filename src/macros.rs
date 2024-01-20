@@ -5,7 +5,7 @@ macro_rules! vec_impl_unary_op {
             type Output = Self;
             #[inline]
             fn $op_name(self) -> Self::Output {
-                // SAFETY: the inrinsic won't compile on a platform it isn't available
+                // SAFETY: `cfg_if!` should guarantee the intrinsic is available.
                 unsafe { $intrinsic(self.into()).into() }
             }
         }
@@ -18,8 +18,7 @@ macro_rules! vec_impl_binary_op {
             type Output = Self;
             #[inline]
             fn $op_name(self, rhs: Self) -> Self::Output {
-                // SAFETY: the intrinsic won't compile on a platform it isn't available;
-                // cfg_if! should do its job
+                // SAFETY: `cfg_if!` should guarantee the intrinsic is available.
                 unsafe { $intrinsic(self.into(), rhs.into()).into() }
             }
         }

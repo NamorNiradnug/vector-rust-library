@@ -18,7 +18,7 @@ impl SIMDBase<4> for Vec4f {
 
     #[inline]
     fn broadcast(value: Self::Element) -> Self {
-        // SAFETY: this file is only used on builds with NEON feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { vdupq_n_f32(value) }.into()
     }
 
@@ -34,7 +34,7 @@ impl SIMDBase<4> for Vec4f {
 
     #[inline]
     fn sum(self) -> Self::Element {
-        // SAFETY: this file is only used on builds with NEON feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { vaddvq_f32(self.0) }
     }
 }
@@ -42,7 +42,7 @@ impl SIMDBase<4> for Vec4f {
 impl Vec4fBase for Vec4f {
     #[inline]
     fn new(v0: f32, v1: f32, v2: f32, v3: f32) -> Self {
-        // SAFETY: this file is only used on builds with NEON feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { Self::load_ptr([v0, v1, v2, v3].as_ptr()) }
     }
 }
@@ -57,7 +57,7 @@ vec_impl_binary_op!(Vec4f, Div, div, vdivq_f32);
 impl PartialEq for Vec4f {
     #[inline]
     fn eq(&self, other: &Vec4f) -> bool {
-        // SAFETY: this file is only used on builds with NEON feature
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { vminvq_u32(vceqq_f32(self.0, other.0)) != 0 }
     }
 }
