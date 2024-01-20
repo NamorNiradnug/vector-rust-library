@@ -62,6 +62,7 @@ where
     /// ```
     #[inline]
     fn load(data: &[Self::Element; N]) -> Self {
+        // SAFETY: data contains exactly N elements hence it's safe to load them
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -93,6 +94,7 @@ where
         if data.len() != Self::N {
             panic!("data must contain exactly {} elements", Self::N);
         }
+        // SAFETY: data contains exactly N elements hence it's safe to load them
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -121,6 +123,7 @@ where
         if data.len() < Self::N {
             panic!("data must contain at least {} elements", Self::N);
         }
+        // SAFETY: data contains at least N elements hence it's safe to load the first N
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -133,6 +136,7 @@ where
     /// Stores vector into given `array`.
     #[inline]
     fn store(self, array: &mut [Self::Element; N]) {
+        // SAFETY: array has size of N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
@@ -165,6 +169,7 @@ where
         if slice.len() != Self::N {
             panic!("slice must contain exactly {} elements", Self::N);
         }
+        // SAFETY: slice has size of N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
@@ -190,6 +195,7 @@ where
         if slice.len() < Self::N {
             panic!("slice must contain at least {} elements", Self::N);
         }
+        // SAFETY: slice has size of at least N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
@@ -219,6 +225,7 @@ where
             panic!("invalid index");
         }
         let mut stored = std::mem::MaybeUninit::<[Self::Element; N]>::uninit();
+        // SAFETY: `stored` has size of N hence it's safe to store the vector there
         unsafe {
             self.store_ptr(stored.as_mut_ptr() as *mut Self::Element);
             stored.assume_init()[index]

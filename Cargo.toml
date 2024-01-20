@@ -27,3 +27,6 @@ cfg_aliases = "0.2.0"
 [[bench]]
 name = "dotprod"
 harness = false
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"
