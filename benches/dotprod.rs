@@ -39,7 +39,20 @@ fn dotprod_bench(c: &mut Criterion) {
         .plot_config(PlotConfiguration::default().summary_scale(criterion::AxisScale::Logarithmic));
     group.warm_up_time(Duration::from_millis(500));
     group.measurement_time(Duration::from_secs(3));
-    for vec_len in [256, 256 + 3, 256 + 7, 1024, 1024 + 3, 1024 + 7] {
+    for vec_len in [
+        1,
+        3,
+        4,
+        6,
+        8,
+        16,
+        256,
+        256 + 3,
+        256 + 7,
+        1024,
+        1024 + 3,
+        1024 + 7,
+    ] {
         let vec1 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let vec2 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let input = (vec1.as_slice(), vec2.as_slice());
