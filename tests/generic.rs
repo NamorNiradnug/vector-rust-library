@@ -1,13 +1,13 @@
 #![allow(non_snake_case)]
 
 use paste::paste;
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Neg, usize};
 use vrl::prelude::*;
 
-fn iota_array<T: From<i16> + Copy, const N: usize>() -> [T; N] {
+fn iota_array<T: From<i16> + Copy, const N: usize>(first: usize) -> [T; N] {
     let mut array = [0.into(); N];
-    (0..N).for_each(|i| {
-        array[i] = (i as i16).into();
+    (first..first + N).for_each(|i| {
+        array[i - first] = (i as i16).into();
     });
     array
 }
@@ -26,7 +26,7 @@ where
 {
     const MAGIC_VALUE: i16 = 42;
 
-    let values = iota_array();
+    let values = iota_array(0);
     let mut result = [MAGIC_VALUE.into(); N];
     let loaded = VecT::load(&values);
     loaded.store(&mut result);
@@ -104,3 +104,40 @@ macro_rules! test_store_load {
 
 test_store_load!(Vec4f, 4);
 test_store_load!(Vec8f, 8);
+
+fn test_fused_impl<
+    const N: usize,
+    VecT: SIMDFusedCalc
+        + SIMDBase<N>
+        + From<[VecT::Element; N]>
+        + PartialEq
+        + Arithmetic
+        + Neg<Output = VecT>
+        + Debug
+        + Copy,
+>()
+where
+    VecT::Element: From<i16> + Copy,
+{
+    let a = VecT::from(iota_array::<VecT::Element, N>(0));
+    let b = VecT::from(iota_array::<VecT::Element, N>(2));
+    let c = VecT::from(iota_array::<VecT::Element, N>(4));
+    assert_eq!(a.mul_add(b, c), a * b + c);
+    assert_eq!(a.nmul_add(b, c), -(a * b) + c);
+    assert_eq!(a.mul_sub(b, c), a * b - c);
+    assert_eq!(a.nmul_sub(b, c), -(a * b + c));
+}
+
+macro_rules! test_fused {
+    ($vectype: ty, $N: literal) => {
+        paste! {
+            #[test]
+            fn [<test_fused_ops_ $vectype>]() {
+                test_fused_impl::<$N, $vectype>();
+            }
+        }
+    };
+}
+
+test_fused!(Vec4f, 4);
+test_fused!(Vec8f, 8);
