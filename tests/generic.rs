@@ -62,25 +62,25 @@ macro_rules! test_checked_load_store {
     ($vectype: ty) => {
         paste! {
             #[test]
-            #[should_panic]
+            #[should_panic(expected = "data must contain exactly ")]
             fn [<test_load_checked_too_small_ $vectype>]() {
                 $vectype::load_checked(&[0i8.into(); 0]);
             }
 
             #[test]
-            #[should_panic]
+            #[should_panic(expected = "data must contain exactly ")]
             fn [<test_load_checked_too_big_ $vectype>]() {
                 $vectype::load_checked(&[0i8.into(); 100]);
             }
 
             #[test]
-            #[should_panic]
+            #[should_panic(expected = "slice must contain exactly ")]
             fn [<test_store_checked_too_small_ $vectype>]() {
                 $vectype::default().store_checked(&mut [0i8.into(); 0]);
             }
 
             #[test]
-            #[should_panic]
+            #[should_panic(expected = "slice must contain exactly ")]
             fn [<test_store_checked_too_big_ $vectype>]() {
                 $vectype::default().store_checked(&mut [0i8.into(); 100]);
             }
@@ -94,7 +94,6 @@ macro_rules! test_store_load {
             test_checked_load_store!($vectype);
 
             #[test]
-            #[allow(non_snake_case)]
             fn [<test_store_load_ $vectype>]() {
                 test_store_load_impl::<$vectype, $N>();
             }
