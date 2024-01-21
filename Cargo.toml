@@ -30,3 +30,7 @@ harness = false
 
 [features]
 portable_simd_bench = []
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"
+

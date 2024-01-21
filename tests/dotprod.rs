@@ -1,14 +1,14 @@
 use std::{iter::zip, ops::Range};
 
 use rand::{rngs::SmallRng, Rng};
-use vrl::{SIMDVector, Vec8f};
+use vrl::prelude::*;
 
 pub fn dotprod_simple(vec1: &[f32], vec2: &[f32]) -> f32 {
     zip(vec1, vec2).map(|(x, y)| x * y).sum()
 }
 
 pub fn dotprod_vec8f_chunks(vec1: &[f32], vec2: &[f32]) -> f32 {
-    zip(vec1.chunks(Vec8f::ELEMENTS), vec2.chunks(Vec8f::ELEMENTS))
+    zip(vec1.chunks(Vec8f::N), vec2.chunks(Vec8f::N))
         .map(|(x, y)| Vec8f::load_partial(x) * Vec8f::load_partial(y))
         .sum::<Vec8f>()
         .sum()
@@ -17,9 +17,9 @@ pub fn dotprod_vec8f_chunks(vec1: &[f32], vec2: &[f32]) -> f32 {
 pub fn dotprod_vec8f_loop(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
     assert_eq!(vec1.len(), vec2.len());
     let mut sum = Vec8f::default();
-    while vec1.len() >= Vec8f::ELEMENTS {
-        let (head1, tail1) = vec1.split_at(Vec8f::ELEMENTS);
-        let (head2, tail2) = vec2.split_at(Vec8f::ELEMENTS);
+    while vec1.len() >= Vec8f::N {
+        let (head1, tail1) = vec1.split_at(Vec8f::N);
+        let (head2, tail2) = vec2.split_at(Vec8f::N);
         sum += Vec8f::load_checked(head1) * Vec8f::load_checked(head2);
         vec1 = tail1;
         vec2 = tail2;
@@ -31,16 +31,31 @@ pub fn dotprod_vec8f_loop(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
 pub fn dotprod_vec8f_ptr(vec1: &[f32], vec2: &[f32]) -> f32 {
     assert_eq!(vec1.len(), vec2.len());
     let mut sum = Vec8f::default();
-    let whole_iters = vec1.len() / Vec8f::ELEMENTS;
+    let whole_iters = vec1.len() / Vec8f::N;
     for i in 0..whole_iters {
+        // SAFETY: 8 * whole_iters <= vec1.len() hence (8 * i)..(8 * i + 7) < vec1.len()
         sum += unsafe {
             Vec8f::load_ptr(vec1.as_ptr().add(8 * i)) * Vec8f::load_ptr(vec2.as_ptr().add(8 * i))
         }
     }
-    if whole_iters * Vec8f::ELEMENTS < vec1.len() {
-        sum += Vec8f::load_partial(vec1.split_at(whole_iters * Vec8f::ELEMENTS).1)
-            * Vec8f::load_partial(vec2.split_at(whole_iters * Vec8f::ELEMENTS).1)
+    if whole_iters * Vec8f::N < vec1.len() {
+        sum += Vec8f::load_partial(vec1.split_at(whole_iters * Vec8f::N).1)
+            * Vec8f::load_partial(vec2.split_at(whole_iters * Vec8f::N).1)
     }
+    sum.sum()
+}
+
+pub fn dotprod_vec8f_loop_fused(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
+    assert_eq!(vec1.len(), vec2.len());
+    let mut sum = Vec8f::default();
+    while vec1.len() >= Vec8f::N {
+        let (head1, tail1) = vec1.split_at(Vec8f::N);
+        let (head2, tail2) = vec2.split_at(Vec8f::N);
+        sum = Vec8f::load_checked(head1).mul_add(Vec8f::load_checked(head2), sum);
+        vec1 = tail1;
+        vec2 = tail2;
+    }
+    sum = Vec8f::load_partial(vec1).mul_add(Vec8f::load_partial(vec2), sum);
     sum.sum()
 }
 
@@ -67,5 +82,6 @@ fn test_dotprod() {
         assert_ulps_eq!(dotprod_vec8f_chunks(vec1, vec2), expected);
         assert_ulps_eq!(dotprod_vec8f_loop(vec1, vec2), expected);
         assert_ulps_eq!(dotprod_vec8f_ptr(vec1, vec2), expected);
+        assert_ulps_eq!(dotprod_vec8f_loop_fused(vec1, vec2), expected);
     }
 }
