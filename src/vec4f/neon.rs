@@ -1,10 +1,10 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::Vec4fBase;
+use super::{SIMDRound, Vec4fBase};
 use crate::{
     intrinsics::*,
     macros::{vec_impl_binary_op, vec_impl_broadcast_default, vec_impl_unary_op},
-    prelude::SIMDBase,
+    prelude::{SIMDBase, SIMDFusedCalc},
 };
 use derive_more::{From, Into};
 
@@ -59,5 +59,36 @@ impl PartialEq for Vec4f {
     fn eq(&self, other: &Vec4f) -> bool {
         // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
         unsafe { vminvq_u32(vceqq_f32(self.0, other.0)) != 0 }
+    }
+}
+
+impl SIMDFusedCalc for Vec4f {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
+        unsafe { vfmaq_f32(c.0, b.0, self.0) }.into()
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        -self.nmul_add(b, c)
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
+        unsafe { vfmsq_f32(c.0, b.0, self.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        -self.mul_add(b, c)
+    }
+}
+
+impl SIMDRound for Vec4f {
+    fn round(self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec4f/mod.rs` guarantees the intrinsic is available.
+        unsafe { vcvtq_f32_s32(vcvtaq_s32_f32(self.0)) }.into()
     }
 }

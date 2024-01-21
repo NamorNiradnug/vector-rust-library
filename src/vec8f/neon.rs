@@ -3,8 +3,8 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use super::Vec8fBase;
 use crate::{
     intrinsics::*,
-    macros::vec_impl_broadcast_default,
-    prelude::{SIMDBase, Vec4f},
+    macros::{vec_impl_broadcast_default, vec_impl_fused_low_high, vec_impl_round_low_high},
+    prelude::{SIMDBase, SIMDFusedCalc, Vec4f},
 };
 use derive_more::{From, Into};
 
@@ -101,3 +101,6 @@ impl PartialEq for Vec8f {
         self.split() == other.split()
     }
 }
+
+vec_impl_fused_low_high!(Vec8f);
+vec_impl_round_low_high!(Vec8f);

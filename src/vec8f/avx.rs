@@ -1,4 +1,4 @@
-use crate::{common::SIMDBase, intrinsics::*, macros::vec_impl_binary_op, vec4f::Vec4f};
+use crate::{common::*, intrinsics::*, macros::*, vec4f::Vec4f};
 use derive_more::{From, Into};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -104,7 +104,44 @@ impl PartialEq for Vec8f {
     }
 }
 
+#[cfg(target_feature = "fma")]
+impl crate::common::SIMDFusedCalc for Vec8f {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
+        unsafe { _mm256_fmadd_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
+        unsafe { _mm256_fmsub_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
+        unsafe { _mm256_fnmadd_ps(self.0, b.0, c.0) }.into()
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
+        unsafe { _mm256_fnmsub_ps(self.0, b.0, c.0) }.into()
+    }
+}
+
+#[cfg(not(target_feature = "fma"))]
+impl crate::common::SIMDFusedCalcFallback for Vec8f {}
+
 vec_impl_binary_op!(Vec8f, Add, add, _mm256_add_ps);
 vec_impl_binary_op!(Vec8f, Sub, sub, _mm256_sub_ps);
 vec_impl_binary_op!(Vec8f, Mul, mul, _mm256_mul_ps);
 vec_impl_binary_op!(Vec8f, Div, div, _mm256_div_ps);
+
+impl SIMDRound for Vec8f {
+    fn round(self) -> Self {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
+        unsafe { _mm256_round_ps(self.0, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC) }.into()
+    }
+}

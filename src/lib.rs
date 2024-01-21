@@ -23,7 +23,7 @@ mod intrinsics {
 
 pub mod prelude {
     pub use super::{
-        common::{SIMDBase, SIMDPartialLoad, SIMDPartialStore, SIMDVector},
+        common::*,
         vec4f::{Vec4f, Vec4fBase},
         vec8f::{Vec8f, Vec8fBase},
     };
