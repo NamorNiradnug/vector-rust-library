@@ -7,17 +7,29 @@ use rand::{rngs::SmallRng, SeedableRng};
 mod dotprod;
 use dotprod::*;
 
+#[cfg(feature = "vectorclass_bench")]
+#[cxx::bridge]
+mod ffi {
+    unsafe extern "C++" {
+        include!("vector-rust-library/benches/vectorclass_bench.hpp");
+        unsafe fn DotprodVec8fVCL(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+    }
+}
+
+#[cfg(feature = "vectorclass_bench")]
+#[inline]
+fn dotprod_vec8f_vectorclass(vec1: &[f32], vec2: &[f32]) -> f32 {
+    assert_eq!(vec1.len(), vec2.len());
+    // SAFETY: hopefully there's no UB in the C++ code.
+    unsafe { ffi::DotprodVec8fVCL(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+}
+
 fn dotprod_bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("dotprod");
     let mut rand_gen = SmallRng::seed_from_u64(57);
     group.warm_up_time(Duration::from_millis(500));
     group.measurement_time(Duration::from_secs(3));
     for vec_len in [
-        1,
-        3,
-        4,
-        6,
-        8,
         16,
         256,
         256 + 3,
@@ -50,6 +62,10 @@ fn dotprod_bench(c: &mut Criterion) {
             dotprod_vec8f_loop_fused,
             "handwritten loop with fused add-mul"
         );
+
+        #[cfg(feature = "vectorclass_bench")]
+        bench_dotprod!(dotprod_vec8f_vectorclass, "Vector Class Library");
+
     }
     group.finish();
 }
