@@ -1,4 +1,4 @@
-#![feature(portable_simd)]
+#![cfg_attr(feature = "portable_simd_bench", feature(portable_simd))]
 
 use std::time::Duration;
 
@@ -11,6 +11,7 @@ use rand::{rngs::SmallRng, SeedableRng};
 mod dotprod;
 use dotprod::*;
 
+#[cfg(feature = "portable_simd_bench")]
 fn dotprod_portable_simd(vec1: &[f32], vec2: &[f32]) -> f32 {
     use std::simd::prelude::*;
     assert_eq!(vec1.len(), vec2.len());
@@ -64,6 +65,8 @@ fn dotprod_bench(c: &mut Criterion) {
             &input,
             |b, (vec1, vec2)| b.iter(|| dotprod_vec8f_ptr(vec1, vec2)),
         );
+
+        #[cfg(feature = "portable_simd_bench")]
         group.bench_with_input(
             BenchmarkId::new("portable simd f32x8", vec_len),
             &input,
