@@ -40,15 +40,13 @@ fn dotprod_bench(c: &mut Criterion) {
     group.warm_up_time(Duration::from_millis(500));
     group.measurement_time(Duration::from_secs(3));
     for vec_len in [
-        1,
-        3,
-        4,
-        6,
-        8,
         16,
         256,
         256 + 3,
         256 + 7,
+        512,
+        512 + 3,
+        512 + 7,
         1024,
         1024 + 3,
         1024 + 7,
