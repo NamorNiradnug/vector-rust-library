@@ -141,3 +141,42 @@ macro_rules! test_fused {
 
 test_fused!(Vec4f, 4);
 test_fused!(Vec8f, 8);
+
+fn test_round_impl<const N: usize, VecT: SIMDBase<N> + SIMDRound>()
+where
+    VecT::Element: From<i16> + From<f32> + Copy + PartialEq,
+    VecT: From<[VecT::Element; N]>
+        + PartialEq
+        + Debug
+        + Copy
+        + Arithmetic<VecT::Element>
+        + Into<[VecT::Element; N]>,
+{
+    let int_vec = VecT::from(iota_array::<VecT::Element, N>(0));
+    assert_eq!(int_vec.round(), int_vec);
+    assert_eq!((int_vec + 0.4.into()).round(), int_vec);
+    assert_eq!((int_vec + 0.6.into()).round(), int_vec + 1.into());
+    assert_eq!((int_vec - 2.4.into()).round(), int_vec - 2.into());
+    assert_eq!((int_vec - 2.6.into()).round(), int_vec - 3.into());
+    assert_eq!(
+        ((int_vec - 0.1.into()) * 0.5.into()).round(),
+        VecT::load_prefix(
+            &[0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0, 6.0, 7.0, 7.0]
+                .map(|x| x.into())
+        )
+    );
+}
+
+macro_rules! test_round {
+    ($vectype: ty, $N: literal) => {
+        paste! {
+            #[test]
+            fn [<test_round_ $vectype>]() {
+                test_round_impl::<$N, $vectype>();
+            }
+        }
+    };
+}
+
+test_round!(Vec4f, 4);
+test_round!(Vec8f, 8);
