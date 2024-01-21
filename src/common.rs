@@ -392,7 +392,8 @@ impl<T: SIMDFusedCalcFallback + Arithmetic + Neg<Output = Self>> SIMDFusedCalc f
 }
 
 pub trait SIMDRound {
-    /// Rounds values of the vector to the nearest integers.
+    /// Rounds values of the vector to the nearest integers. In case of two integers are equally
+    /// close (i.e. fractional part of a number equals `0.5`) the behavior depends on platform.
     ///
     /// # Exmaples
     /// ```
