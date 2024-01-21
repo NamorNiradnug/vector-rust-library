@@ -6,9 +6,9 @@ use vrl::prelude::*;
 
 fn iota_array<T: From<i16> + Copy, const N: usize>(first: usize) -> [T; N] {
     let mut array = [0.into(); N];
-    (first..first + N).for_each(|i| {
+    for i in first..first + N {
         array[i - first] = (i as i16).into();
-    });
+    }
     array
 }
 
