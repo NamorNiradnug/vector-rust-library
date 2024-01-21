@@ -3,8 +3,8 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 use super::Vec8fBase;
 use crate::{
     intrinsics::*,
-    macros::vec_impl_broadcast_default,
-    prelude::{SIMDBase, Vec4f},
+    macros::{vec_impl_broadcast_default, vec_impl_fused_low_high, vec_impl_round_low_high},
+    prelude::{SIMDBase, SIMDFusedCalc, Vec4f},
 };
 use derive_more::{From, Into};
 
@@ -66,6 +66,7 @@ impl Neg for Vec8f {
 
     #[inline]
     fn neg(self) -> Self::Output {
+        // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
         unsafe { float32x4x2_t(vnegq_f32(self.0 .0), vnegq_f32(self.0 .1)) }.into()
     }
 }
@@ -76,6 +77,7 @@ macro_rules! impl_binary_op {
             type Output = Self;
             #[inline]
             fn $op(self, other: Self) -> Self::Output {
+                // SAFETY: the `cfg_if!` in `vec8f/mod.rs` guarantees the intrinsic is available.
                 unsafe {
                     float32x4x2_t(
                         $intrinsic(self.0 .0, other.0 .0),
@@ -99,3 +101,6 @@ impl PartialEq for Vec8f {
         self.split() == other.split()
     }
 }
+
+vec_impl_fused_low_high!(Vec8f);
+vec_impl_round_low_high!(Vec8f);

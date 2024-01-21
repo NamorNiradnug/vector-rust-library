@@ -62,6 +62,7 @@ where
     /// ```
     #[inline]
     fn load(data: &[Self::Element; N]) -> Self {
+        // SAFETY: data contains exactly N elements hence it's safe to load them
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -93,6 +94,7 @@ where
         if data.len() != Self::N {
             panic!("data must contain exactly {} elements", Self::N);
         }
+        // SAFETY: data contains exactly N elements hence it's safe to load them
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -121,6 +123,7 @@ where
         if data.len() < Self::N {
             panic!("data must contain at least {} elements", Self::N);
         }
+        // SAFETY: data contains at least N elements hence it's safe to load the first N
         unsafe { Self::load_ptr(data.as_ptr()) }
     }
 
@@ -133,6 +136,7 @@ where
     /// Stores vector into given `array`.
     #[inline]
     fn store(self, array: &mut [Self::Element; N]) {
+        // SAFETY: array has size of N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(array.as_mut_ptr()) }
     }
 
@@ -165,6 +169,7 @@ where
         if slice.len() != Self::N {
             panic!("slice must contain exactly {} elements", Self::N);
         }
+        // SAFETY: slice has size of N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
@@ -190,6 +195,7 @@ where
         if slice.len() < Self::N {
             panic!("slice must contain at least {} elements", Self::N);
         }
+        // SAFETY: slice has size of at least N elements hence it's safe to store the vector there
         unsafe { self.store_ptr(slice.as_mut_ptr()) };
     }
 
@@ -219,6 +225,7 @@ where
             panic!("invalid index");
         }
         let mut stored = std::mem::MaybeUninit::<[Self::Element; N]>::uninit();
+        // SAFETY: `stored` has size of N hence it's safe to store the vector there
         unsafe {
             self.store_ptr(stored.as_mut_ptr() as *mut Self::Element);
             stored.assume_init()[index]
@@ -310,6 +317,93 @@ pub trait SIMDPartialStore<T> {
     fn store_partial(&self, slice: &mut [T]);
 }
 
+pub trait SIMDFusedCalc {
+    /// Multiplies vector by `b` and adds `c` to the product.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.mul_add(b, c), a * b + c);
+    /// ```
+    fn mul_add(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` ans substracts `c` from the procuct.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.mul_sub(b, c), a * b - c);
+    /// ```
+    fn mul_sub(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` and substracts the product from `c`.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.nmul_add(b, c), c - a * b);
+    /// ```
+    fn nmul_add(self, b: Self, c: Self) -> Self;
+
+    /// Multiplies vector by `b` and substracts the product from `-c`.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let a = Vec4f::new(1.0, 2.0, 0.5, 2.0);
+    /// let b = Vec4f::new(1.0, 0.5, 2.0, 3.0);
+    /// let c = Vec4f::new(4.0, 2.0, 3.0, 1.0);
+    /// assert_eq!(a.nmul_sub(b, c), -(a * b + c));
+    /// ```
+    fn nmul_sub(self, b: Self, c: Self) -> Self;
+}
+
+pub(crate) trait SIMDFusedCalcFallback {}
+
+impl<T: SIMDFusedCalcFallback + Arithmetic + Neg<Output = Self>> SIMDFusedCalc for T {
+    #[inline]
+    fn mul_add(self, b: Self, c: Self) -> Self {
+        self * b + c
+    }
+
+    #[inline]
+    fn mul_sub(self, b: Self, c: Self) -> Self {
+        self * b - c
+    }
+
+    #[inline]
+    fn nmul_add(self, b: Self, c: Self) -> Self {
+        c - self * b
+    }
+
+    #[inline]
+    fn nmul_sub(self, b: Self, c: Self) -> Self {
+        -(self * b + c)
+    }
+}
+
+pub trait SIMDRound {
+    /// Rounds values of the vector to the nearest integers. In case of two integers are equally
+    /// close (i.e. fractional part of a number equals `0.5`) the behavior depends on platform.
+    ///
+    /// # Exmaples
+    /// ```
+    /// # use vrl::prelude::*;
+    /// let vec = Vec4f::new(1.3, -3.7, 0.7, -0.3);
+    /// assert_eq!(vec.round(), Vec4f::new(1.0, -4.0, 1.0, 0.0));
+    /// ```
+    fn round(self) -> Self;
+}
+
 pub trait Arithmetic<Rhs = Self, Output = Self>:
     Add<Rhs, Output = Output>
     + Sub<Rhs, Output = Output>
@@ -370,7 +464,7 @@ impl<T, Rhs> ArithmeticAssign<Rhs> for T where
 /// [`index`]: Index::index
 pub trait SIMDVector<const N: usize>:
     SIMDBase<N>
-    + Neg
+    + Neg<Output = Self>
     + Arithmetic
     + ArithmeticAssign<Self>
     + Arithmetic<Self::Element>
@@ -381,6 +475,7 @@ pub trait SIMDVector<const N: usize>:
     + for<'a> From<&'a [Self::Element; N]>
     + SIMDPartialLoad<Self::Element>
     + SIMDPartialStore<Self::Element>
+    + SIMDFusedCalc
     + Default
     + Copy
     + Clone
