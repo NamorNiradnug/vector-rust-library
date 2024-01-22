@@ -12,23 +12,32 @@ use dotprod::*;
     not(target_arch = "x86"),
     not(target_arch = "x86_64")
 ))]
-compile_error!("Vector CLass Library only available on x86 and x86-64 platforms");
+compile_error!("Vector Class Library only available on x86 and x86-64 platforms");
 
 #[cfg(feature = "vectorclass_bench")]
-#[cxx::bridge(namespace = "benches")]
-mod ffi {
-    unsafe extern "C++" {
-        include!("vector-rust-library/benches/vectorclass_bench.hpp");
-        unsafe fn DotprodVec8fVCL(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+mod vcl_bench {
+    #[cxx::bridge(namespace = "benches")]
+    mod ffi {
+        unsafe extern "C++" {
+            include!("vector-rust-library/benches/vectorclass_bench.hpp");
+            unsafe fn DotprodVec8fVCL(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+            unsafe fn DotprodVec8fVCLFused(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+        }
     }
-}
 
-#[cfg(feature = "vectorclass_bench")]
-#[inline]
-fn dotprod_vec8f_vectorclass(vec1: &[f32], vec2: &[f32]) -> f32 {
-    assert_eq!(vec1.len(), vec2.len());
-    // SAFETY: hopefully there's no UB in the C++ code.
-    unsafe { ffi::DotprodVec8fVCL(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+    #[inline]
+    pub fn dotprod_vec8f_vectorclass(vec1: &[f32], vec2: &[f32]) -> f32 {
+        assert_eq!(vec1.len(), vec2.len());
+        // SAFETY: hopefully there's no UB in the C++ code.
+        unsafe { ffi::DotprodVec8fVCL(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn dotprod_vec8f_vectorclass_fused(vec1: &[f32], vec2: &[f32]) -> f32 {
+        assert_eq!(vec1.len(), vec2.len());
+        // SAFETY: hopefully there's no UB in the C++ code.
+        unsafe { ffi::DotprodVec8fVCLFused(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+    }
 }
 
 fn dotprod_bench(c: &mut Criterion) {
@@ -36,7 +45,18 @@ fn dotprod_bench(c: &mut Criterion) {
     let mut rand_gen = SmallRng::seed_from_u64(57);
     group.warm_up_time(Duration::from_millis(500));
     group.measurement_time(Duration::from_secs(3));
-    for vec_len in [16, 256, 256 + 3, 256 + 7, 1024, 1024 + 3, 1024 + 7] {
+    for vec_len in [
+        16,
+        256,
+        256 + 3,
+        256 + 7,
+        512,
+        512 + 3,
+        512 + 7,
+        1024,
+        1024 + 3,
+        1024 + 7,
+    ] {
         let vec1 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let vec2 = generate_rand_vector(vec_len, -1.0..1.0, &mut rand_gen);
         let input = (vec1.as_slice(), vec2.as_slice());
@@ -63,7 +83,11 @@ fn dotprod_bench(c: &mut Criterion) {
         );
 
         #[cfg(feature = "vectorclass_bench")]
-        bench_dotprod!(dotprod_vec8f_vectorclass, "Vector Class Library");
+        {
+            use vcl_bench::*;
+            bench_dotprod!(dotprod_vec8f_vectorclass, "VCL");
+            bench_dotprod!(dotprod_vec8f_vectorclass_fused, "VCL with fused mul-add");
+        }
     }
     group.finish();
 }
