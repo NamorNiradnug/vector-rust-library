@@ -7,7 +7,11 @@ use rand::{rngs::SmallRng, SeedableRng};
 mod dotprod;
 use dotprod::*;
 
-#[cfg(all(feature = "vectorclass_bench", not(target_arch = "x86"), not(target_arch = "x86_64")))]
+#[cfg(all(
+    feature = "vectorclass_bench",
+    not(target_arch = "x86"),
+    not(target_arch = "x86_64")
+))]
 compile_error!("Vector CLass Library only available on x86 and x86-64 platforms");
 
 #[cfg(feature = "vectorclass_bench")]
