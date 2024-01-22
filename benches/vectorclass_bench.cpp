@@ -3,7 +3,7 @@
 #define VCL_NAMESPACE vcl
 #include "vcl/vectorclass.h"
 
-float DotprodVec8fVCL(const int32_t n, const float *vec1, const float *vec2) {
+float benches::DotprodVec8fVCL(const int32_t n, const float *vec1, const float *vec2) {
     using vcl::Vec8f;
 
     Vec8f vec1_part;
