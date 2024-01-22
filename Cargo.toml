@@ -28,5 +28,9 @@ cfg_aliases = "0.2.0"
 name = "dotprod"
 harness = false
 
+[features]
+portable_simd_bench = []
+
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"
+
