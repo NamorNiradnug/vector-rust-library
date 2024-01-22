@@ -32,6 +32,7 @@ harness = false
 
 [features]
 vectorclass_bench = ["cxx-build"]
+portable_simd_bench = []
 
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"

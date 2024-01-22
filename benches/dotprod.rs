@@ -1,6 +1,10 @@
+#![cfg_attr(feature = "portable_simd_bench", feature(portable_simd))]
+
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{
+    criterion_group, criterion_main, BenchmarkId, Criterion, PlotConfiguration, Throughput,
+};
 use rand::{rngs::SmallRng, SeedableRng};
 
 #[path = "../tests/dotprod.rs"]
@@ -40,9 +44,32 @@ mod vcl_bench {
     }
 }
 
+#[cfg(feature = "portable_simd_bench")]
+fn dotprod_portable_simd(vec1: &[f32], vec2: &[f32]) -> f32 {
+    use std::simd::prelude::*;
+    assert_eq!(vec1.len(), vec2.len());
+    let mut sum = f32x8::default();
+
+    let mut i = 0;
+    while i < vec1.len() & !7 {
+        sum += f32x8::from_slice(vec1.split_at(i).1) * f32x8::from_slice(vec2.split_at(i).1);
+        i += 8;
+    }
+    if i < vec1.len() {
+        // TODO: probably that's not the best way to implement `partial_load`
+        sum += f32x8::gather_or_default(
+            vec1,
+            [i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7].into(),
+        );
+    }
+    sum.reduce_sum()
+}
+
 fn dotprod_bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("dotprod");
     let mut rand_gen = SmallRng::seed_from_u64(57);
+    group
+        .plot_config(PlotConfiguration::default().summary_scale(criterion::AxisScale::Logarithmic));
     group.warm_up_time(Duration::from_millis(500));
     group.measurement_time(Duration::from_secs(3));
     for vec_len in [
@@ -88,6 +115,9 @@ fn dotprod_bench(c: &mut Criterion) {
             bench_dotprod!(dotprod_vec8f_vectorclass, "VCL");
             bench_dotprod!(dotprod_vec8f_vectorclass_fused, "VCL with fused mul-add");
         }
+
+        #[cfg(feature = "portable_simd_bench")]
+        bench_dotprod!(dotprod_portable_simd, "portable simd f32x8");
     }
     group.finish();
 }
