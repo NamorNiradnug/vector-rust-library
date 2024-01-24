@@ -43,7 +43,7 @@ float benches::DotprodVec8fVCLFused(int n, const float *vec1, const float *vec2)
     if (i < n) {
         vec1_part.load_partial(n - i, vec1 + i);
         vec2_part.load_partial(n - i, vec2 + i);
-        sum += vcl::mul_add(vec1_part, vec2_part, sum);
+        sum = vcl::mul_add(vec1_part, vec2_part, sum);
     }
 
     return vcl::horizontal_add(sum);
