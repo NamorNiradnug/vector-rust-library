@@ -5,9 +5,10 @@ fn main() {
     {
         println!("cargo:rerun-if-changed=benches/vectorclass_bench.cpp");
         cxx_build::bridge("benches/dotprod.rs")
+            .compiler("clang++")
             .file("benches/vectorclass_bench.cpp")
             .flag("-march=native")
-            .flag("-O3")
+            .opt_level(3)
             .std("c++17")
             .compile("vectorclass_bench");
     }
