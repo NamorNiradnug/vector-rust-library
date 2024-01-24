@@ -8,6 +8,7 @@ fn main() {
             .file("benches/vectorclass_bench.cpp")
             .flag("-march=native")
             .flag("-O3")
+            .std("c++17")
             .compile("vectorclass_bench");
     }
 
