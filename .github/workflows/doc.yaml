@@ -1,9 +1,9 @@
-name: Update docs on GitHub Pages
-
 on:
   push:
     branches: ["main"]
     workflow_dispatch:
+
+name: Update docs on GitHub Pages
 
 permissions:
   contents: read
