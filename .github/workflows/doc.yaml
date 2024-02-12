@@ -1,6 +1,6 @@
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "fix-docs-styles"]
   workflow_dispatch:
 
 name: Update docs on GitHub Pages
