@@ -28,8 +28,13 @@ jobs:
         with:
           command: doc
           args: --no-deps
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "./target/doc/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./target/doc/
 
@@ -42,5 +47,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v1
 
