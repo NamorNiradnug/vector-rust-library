@@ -29,9 +29,8 @@ jobs:
           command: doc
           args: --no-deps
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v1
         with:
-          name: github-pages
           path: ./target/doc/
 
   deploy:
