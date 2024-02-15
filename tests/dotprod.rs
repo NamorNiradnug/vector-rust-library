@@ -33,6 +33,7 @@ pub fn dotprod_vec8f_ptr(vec1: &[f32], vec2: &[f32]) -> f32 {
     let mut sum = Vec8f::default();
     let whole_iters = vec1.len() / Vec8f::N;
     for i in 0..whole_iters {
+        // SAFETY: 8 * whole_iters <= vec1.len() hence (8 * i)..(8 * i + 7) < vec1.len()
         sum += unsafe {
             Vec8f::load_ptr(vec1.as_ptr().add(8 * i)) * Vec8f::load_ptr(vec2.as_ptr().add(8 * i))
         }
