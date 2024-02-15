@@ -32,6 +32,22 @@ fn dotprod_portable_simd(vec1: &[f32], vec2: &[f32]) -> f32 {
     sum.reduce_sum()
 }
 
+#[cfg(feature = "wide_bench")]
+fn dotprod_wide(mut vec1: &[f32], mut vec2: &[f32]) -> f32 {
+    use wide::f32x8;
+
+    assert_eq!(vec1.len(), vec2.len());
+    let mut sum = f32x8::default();
+    while vec1.len() >= 8 {
+        let (head1, tail1) = vec1.split_at(8);
+        let (head2, tail2) = vec2.split_at(8);
+        sum += f32x8::new(head1.try_into().unwrap()) * f32x8::new(head2.try_into().unwrap());
+        vec1 = tail1;
+        vec2 = tail2;
+    }
+    sum.reduce_add() + vec1.iter().zip(vec2).map(|(x, y)| x * y).sum::<f32>()
+}
+
 fn dotprod_bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("dotprod");
     let mut rand_gen = SmallRng::seed_from_u64(57);
@@ -78,6 +94,9 @@ fn dotprod_bench(c: &mut Criterion) {
 
         #[cfg(feature = "portable_simd_bench")]
         bench_dotprod!(dotprod_portable_simd, "portable simd f32x8");
+
+        #[cfg(feature = "wide_bench")]
+        bench_dotprod!(dotprod_wide, "wide f32x8");
     }
     group.finish();
 }
