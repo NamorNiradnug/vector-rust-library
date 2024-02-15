@@ -1,0 +1,3 @@
+[submodule "benches/vcl"]
+	path = benches/vcl
+	url = https://github.com/vectorclass/version2

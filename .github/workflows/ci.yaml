@@ -40,6 +40,26 @@ jobs:
           MIRIFLAGS: -Zmiri-symbolic-alignment-check
       - uses: Swatinem/rust-cache@v2
 
+  test_benches:
+    name: Test Benches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2024-01-07
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --benches --features portable_simd_bench,vectorclass_bench
+        env:
+          RUSTFLAGS: -C target-feature=+avx,+avx2
+      - uses: Swatinem/rust-cache@v2
+
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest

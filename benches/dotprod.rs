@@ -11,6 +11,39 @@ use rand::{rngs::SmallRng, SeedableRng};
 mod dotprod;
 use dotprod::*;
 
+#[cfg(all(
+    feature = "vectorclass_bench",
+    not(target_arch = "x86"),
+    not(target_arch = "x86_64")
+))]
+compile_error!("Vector Class Library only available on x86 and x86-64 platforms");
+
+#[cfg(feature = "vectorclass_bench")]
+mod vcl_bench {
+    #[cxx::bridge(namespace = "benches")]
+    mod ffi {
+        unsafe extern "C++" {
+            include!("vector-rust-library/benches/vectorclass_bench.hpp");
+            unsafe fn DotprodVec8fVCL(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+            unsafe fn DotprodVec8fVCLFused(n: i32, vec1: *const f32, vec2: *const f32) -> f32;
+        }
+    }
+
+    #[inline]
+    pub fn dotprod_vec8f_vectorclass(vec1: &[f32], vec2: &[f32]) -> f32 {
+        assert_eq!(vec1.len(), vec2.len());
+        // SAFETY: hopefully there's no UB in the C++ code.
+        unsafe { ffi::DotprodVec8fVCL(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+    }
+
+    #[inline]
+    pub fn dotprod_vec8f_vectorclass_fused(vec1: &[f32], vec2: &[f32]) -> f32 {
+        assert_eq!(vec1.len(), vec2.len());
+        // SAFETY: hopefully there's no UB in the C++ code.
+        unsafe { ffi::DotprodVec8fVCLFused(vec1.len() as i32, vec1.as_ptr(), vec2.as_ptr()) }
+    }
+}
+
 #[cfg(feature = "portable_simd_bench")]
 fn dotprod_portable_simd(vec1: &[f32], vec2: &[f32]) -> f32 {
     use std::simd::prelude::*;
@@ -75,6 +108,13 @@ fn dotprod_bench(c: &mut Criterion) {
             dotprod_vec8f_loop_fused,
             "handwritten loop with fused add-mul"
         );
+
+        #[cfg(feature = "vectorclass_bench")]
+        {
+            use vcl_bench::*;
+            bench_dotprod!(dotprod_vec8f_vectorclass, "VCL");
+            bench_dotprod!(dotprod_vec8f_vectorclass_fused, "VCL with fused mul-add");
+        }
 
         #[cfg(feature = "portable_simd_bench")]
         bench_dotprod!(dotprod_portable_simd, "portable simd f32x8");

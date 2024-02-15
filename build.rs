@@ -1,6 +1,18 @@
 use cfg_aliases::cfg_aliases;
 
 fn main() {
+    #[cfg(feature = "vectorclass_bench")]
+    {
+        println!("cargo:rerun-if-changed=benches/vectorclass_bench.cpp");
+        cxx_build::bridge("benches/dotprod.rs")
+            .compiler("clang++")
+            .file("benches/vectorclass_bench.cpp")
+            .flag("-march=native")
+            .opt_level(3)
+            .std("c++17")
+            .compile("vectorclass_bench");
+    }
+
     cfg_aliases! {
         sse: { target_feature = "sse" },
         no_sse: { not(sse) },
