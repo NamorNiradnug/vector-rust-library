@@ -20,6 +20,7 @@ cfg-if = "1"
 criterion = "0.5"
 rand = { version = "0.8.5", features = ["small_rng"] }
 approx = "0.5"
+wide = "0.7"
 
 [build-dependencies]
 cfg_aliases = "0.2.0"
@@ -30,6 +31,7 @@ harness = false
 
 [features]
 portable_simd_bench = []
+wide_bench = []
 
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"
