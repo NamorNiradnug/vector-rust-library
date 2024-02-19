@@ -10,6 +10,8 @@ mod macros;
 mod vec4f;
 mod vec8f;
 
+mod exponent;
+
 mod intrinsics {
     #[cfg(target_arch = "x86_64")]
     pub use core::arch::x86_64::*;
@@ -24,6 +26,7 @@ mod intrinsics {
 pub mod prelude {
     pub use super::{
         common::*,
+        exponent::*,
         vec4f::{Vec4f, Vec4fBase},
         vec8f::{Vec8f, Vec8fBase},
     };
