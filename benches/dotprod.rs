@@ -19,7 +19,11 @@ fn dotprod_portable_simd(vec1: &[f32], vec2: &[f32]) -> f32 {
 
     let mut i = 0;
     while i < vec1.len() & !7 {
-        sum += f32x8::from_slice(vec1.split_at(i).1) * f32x8::from_slice(vec2.split_at(i).1);
+        sum = f32x8::mul_add(
+            f32x8::from_slice(vec1.split_at(i).1),
+            f32x8::from_slice(vec2.split_at(i).1),
+            sum,
+        );
         i += 8;
     }
     if i < vec1.len() {
